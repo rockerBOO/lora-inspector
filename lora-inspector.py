@@ -145,7 +145,7 @@ def process_safetensor_file(file):
 
             if metadata is not None:
                 filename = os.path.basename(file)
-                print(filename)
+                print(file)
                 parsed = parse_metadata(metadata)
                 parsed["file"] = file
                 parsed["filename"] = filename
