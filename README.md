@@ -1,6 +1,7 @@
 # LoRA inspector
 
 <!--toc:start-->
+
 - [LoRA inspector](#lora-inspector)
   - [Install](#install)
   - [Usage](#usage)
@@ -9,12 +10,19 @@
   - [Development](#development)
   - [Future](#future)
   - [Reference](#reference)
-<!--toc:end-->
+  <!--toc:end-->
 
-Inspect LoRA files for meta info (and hopefully quantitative analysis of the LoRA weights)
+Inspect LoRA files for meta info (and hopefully quantitative analysis of the
+LoRA weights)
 
 - view training parameters
-- extract metadata to be stored (we can store it in json currently)
+- extract metadata to be stored (we can store it in JSON currently)
+
+---
+
+_NOTE_ this is a work in progress and not meant for production use. _NOTE_
+ 
+---
 
 ## Install
 
@@ -27,7 +35,11 @@ torch
 safetensors
 ```
 
-Can install them using `pip install torch safetensors`, make a venv/conda with them, or add this script to your training directory (to access the dependencies).
+Can install them one of the following:
+
+- `pip install torch safetensors`,
+- make/use with a venv/conda
+- add this script to your training directory (to access the dependencies).
 
 ## Usage
 
@@ -116,7 +128,9 @@ network dim/rank: 8.0 alpha: 4.0 module: networks.lora
 
 ### Save meta
 
-We also have support for saving the meta that is extracted and converted from strings. We can then save those to a JSON file. These will save the metadata into `meta/alorafile.safetensors-{session_id}.json` in the meta directory. 
+We also have support for saving the meta that is extracted and converted from
+strings. We can then save those to a JSON file. These will save the metadata
+into `meta/alorafile.safetensors-{session_id}.json` in the meta directory.
 
 ```bash
 $ python lora-inspector.py ~/loras/alorafile.safetensors --save_meta
@@ -135,7 +149,7 @@ network dim/rank: 8.0 alpha: 4.0 module: networks.lora
 
 ## Development
 
-Formatted using [`black`](https://github.com/psf/black). 
+Formatted using [`black`](https://github.com/psf/black).
 
 ## Future
 
