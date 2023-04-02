@@ -7,6 +7,9 @@ import argparse
 from tqdm import tqdm
 from datetime import datetime
 from typing import Callable
+from torch import Tensor
+import torch
+import math
 
 
 def to_datetime(str: str):
@@ -116,7 +119,81 @@ def parse(entries: dict[str, str]):
     return results
 
 
-def find_safetensor_files(path):
+def key_match(key, match):
+    return key[0 : len(match)] == match
+
+
+def find_vectors_weights(vectors):
+    weight = ".weight"
+
+    unet_weight_results = {}
+    text_encoder_weight_results = {}
+
+    for k in vectors.keys():
+        unet_down = "lora_unet_down_blocks_"
+        unet_up = "lora_unet_up_blocks_"
+        if (
+            key_match(k, unet_down)
+            or key_match(k, unet_up)
+            # or key_match(k, text_encoder)
+        ):
+            if k.endswith(weight):
+                unet_weight_results[k] = torch.flatten(vectors.get_tensor(k)).tolist()
+
+        text_encoder = "lora_te_text_model_encoder_layers_"
+        if key_match(k, text_encoder):
+            if k.endswith(weight):
+                text_encoder_weight_results[k] = torch.flatten(
+                    vectors.get_tensor(k)
+                ).tolist()
+
+    num_results = len(unet_weight_results)
+    sum_mag = 0  # average magnitude
+    sum_str = 0  # average strength
+    for k in unet_weight_results.keys():
+        sum_mag += get_vector_data_magnitude(unet_weight_results[k])
+        sum_str += get_vector_data_strength(unet_weight_results[k])
+
+    avg_mag = sum_mag / num_results
+    avg_str = sum_str / num_results
+
+    print(f"UNet weight average magnitude: {avg_mag}")
+    print(f"UNet weight average strength: {avg_str}")
+
+    num_results = len(text_encoder_weight_results)
+
+    sum_mag = 0  # average magnitude
+    sum_str = 0  # average strength
+    for k in text_encoder_weight_results.keys():
+        sum_mag += get_vector_data_magnitude(text_encoder_weight_results[k])
+        sum_str += get_vector_data_strength(text_encoder_weight_results[k])
+
+    avg_mag = sum_mag / num_results
+    avg_str = sum_str / num_results
+
+    print(f"Text Encoder weight average magnitude: {avg_mag}")
+    print(f"Text Encoder weight average strength: {avg_str}")
+
+    return {"unet": unet_weight_results, "text_encoder": text_encoder_weight_results}
+
+
+def get_vector_data_strength(data: dict[int, Tensor]) -> float:
+    value = 0
+    for n in data:
+        value += abs(n)
+    return value / len(
+        data
+    )  # the average value of each vector (ignoring negative values)
+
+
+def get_vector_data_magnitude(data: dict[int, Tensor]) -> float:
+    value = 0
+    for n in data:
+        value += pow(n, 2)
+    return math.sqrt(value)
+
+
+def find_safetensor_files(path: str | Path):
     return Path(path).rglob("*.safetensors")
 
 
@@ -130,27 +207,30 @@ def save_metadata(file, metadata):
         json.dump(metadata, f, default=str)
 
 
-def process_safetensor_file(file):
-    if os.path.isdir(file):
-        progress = tqdm(find_safetensor_files(file))
-        results = []
-        for path in progress:
-            results.append(process_safetensor_file(path))
-            progress.update(1)
+def process_safetensor_file(file, args):
+    # if os.path.isdir(file):
+    #     progress = tqdm(find_safetensor_files(file))
+    #     results = []
+    #     for path in progress:
+    #         results.append(process_safetensor_file(path))
+    #         progress.update(1)
+    #
+    #     return results
+    # else:
+    with safe_open(file, framework="pt", device="cpu") as f:
+        metadata = f.metadata()
 
-        return results
-    else:
-        with safe_open(file, framework="pt") as f:
-            metadata = f.metadata()
+        if args.weights:
+            find_vectors_weights(f)
 
-            if metadata is not None:
-                filename = os.path.basename(file)
-                print(file)
-                parsed = parse_metadata(metadata)
-                parsed["file"] = file
-                parsed["filename"] = filename
-                print("----------------------")
-                return parsed
+        if metadata is not None:
+            filename = os.path.basename(file)
+            print(file)
+            parsed = parse_metadata(metadata)
+            parsed["file"] = file
+            parsed["filename"] = filename
+            print("----------------------")
+            return parsed
 
 
 def parse_metadata(metadata):
@@ -184,49 +264,12 @@ def parse_metadata(metadata):
         )
 
         return items
-
-        # print(items)
-
-        # for _group_name, tag_list in tags.items():
-        #     for tag, frequency in tag_list.items():
-        #         # print(frequency, "\t", tag)
-        # print(metadata.get("ss_max_train_samples"), metadata.get("ss_max_train_epochs"), metadata.get("ss_network_module"))
-        # print(metadata)
-        # print(
-        #     metadata.get("ss_num_train_images"),
-        #     metadata.get("ss_unet_lr"),
-        #     metadata.get("ss_text_encoder_lr"),
-        # )
-        #
-        # num_reg_images = int(metadata.get("ss_num_reg_images"))
-        # num_train_images = int(metadata.get("ss_num_train_images"))
-        #
-        # print(f"num reg {num_reg_images}, train {num_train_images}")
-        #
-        # if num_reg_images < num_train_images:
-        #     print("Possibly not enough regularization images to training images")
-        #
-        # newfile = os.path.dirname(file) + metadata.get("ss_new_sd_model_hash") + ".json"
-        # save_metadata(newfile, items)
     else:
         print(
             "Please submit the following keys so we can get a parser made for it:",
             metadata.keys(),
         )
-        # save_metadata(file, metadata)
         return {}
-
-
-def parse_ss(metadata):
-    print(
-        metadata.get("ss_num_train_images"),
-        metadata.get("ss_unet_lr"),
-        metadata.get("ss_text_encoder_lr"),
-    )
-
-    metadata = dict(metadata)
-
-    return metadata
 
 
 def process(args):
@@ -235,12 +278,12 @@ def process(args):
         progress = tqdm(find_safetensor_files(file))
         results = []
         for path in progress:
-            results.append(process_safetensor_file(path))
+            results.append(process_safetensor_file(path, args))
             progress.update(1)
 
         return results
     else:
-        return process_safetensor_file(file)
+        return process_safetensor_file(file, args)
 
 
 if __name__ == "__main__":
@@ -255,6 +298,13 @@ if __name__ == "__main__":
         "--save_meta",
         action="store_true",
         help="Should we save the metadata to a file?",
+    )
+
+    parser.add_argument(
+        "-w",
+        "--weights",
+        action="store_true",
+        help="Find the average weights",
     )
 
     args = parser.parse_args()

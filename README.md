@@ -1,16 +1,17 @@
 # LoRA inspector
 
 <!--toc:start-->
-
 - [LoRA inspector](#lora-inspector)
   - [Install](#install)
   - [Usage](#usage)
     - [Inspect](#inspect)
     - [Save meta](#save-meta)
+    - [Average weights](#average-weights)
+  - [Changelog](#changelog)
   - [Development](#development)
   - [Future](#future)
   - [Reference](#reference)
-  <!--toc:end-->
+<!--toc:end-->
 
 Inspect LoRA files for meta info (and hopefully quantitative analysis of the
 LoRA weights)
@@ -21,7 +22,7 @@ LoRA weights)
 ---
 
 _NOTE_ this is a work in progress and not meant for production use. _NOTE_
- 
+
 ---
 
 ## Install
@@ -33,11 +34,12 @@ Requires dependencies:
 ```
 torch
 safetensors
+tqdm
 ```
 
 Can install them one of the following:
 
-- `pip install torch safetensors`,
+- `pip install torch safetensors tqdm`,
 - make/use with a venv/conda
 - add this script to your training directory (to access the dependencies).
 
@@ -46,16 +48,19 @@ Can install them one of the following:
 ### Inspect
 
 ```bash
-$ python lora-inspector.py
-usage: lora-inspector.py [-h] [-s] lora_file_or_dir
-lora-inspector.py: error: the following arguments are required: lora_file_or_dir
+$ python lora-inspector.py -h
+usage: lora-inspector.py [-h] [-s] [-w] lora_file_or_dir
+
+positional arguments:
+  lora_file_or_dir  Directory containing the lora files
+
+options:
+  -h, --help        show this help message and exit
+  -s, --save_meta   Should we save the metadata to a file?
+  -w, --weights     Find the average weights
 ```
 
 You can add a directory or file:
-
-```bash
-$ python lora-inspector.py ~/loras/
-```
 
 ```bash
 $ python lora-inspector.py /mnt/900/training/cyberpunk-anime-21-min-snr
@@ -112,10 +117,6 @@ network dim/rank: 8.0 alpha: 4.0 module: networks.lora
 ```
 
 ```bash
-$ python lora-inspector.py ~/loras/alorafile.safetensors
-```
-
-```bash
 $ python lora-inspector.py /mnt/900/training/cyberpunk-anime-21-min-snr/unet-1.15-te-1.15-noise-0.1-steps--linear-DAdaptation-networks.lora/last.safetensors
 /mnt/900/training/cyberpunk-anime-21-min-snr/unet-1.15-te-1.15-noise-0.1-steps--linear-DAdaptation-networks.lora/last.safetensors
 train images: 1005 regularization images: 32000
@@ -146,6 +147,25 @@ optimizer: dadaptation.dadapt_adam.DAdaptAdam lr scheduler: linear
 network dim/rank: 8.0 alpha: 4.0 module: networks.lora
 ----------------------
 ```
+
+### Average weights
+
+Find the average magnitude and average strength of your weights. Compare these
+with other LoRAs to see how powerful or not so powerful your weights are. _NOTE_
+Weights shown are not conclusive to a good value. They are an initial example.
+
+```bash
+$ python lora-inspector.py /mnt/900/lora/studioGhibliStyle_offset.safetensors -w
+UNet weight average magnitude: 4.299801171795097
+UNet weight average strength: 0.01127891692482733
+Text Encoder weight average magnitude: 3.128134997225176
+Text Encoder weight average strength: 0.00769676965767913
+```
+
+## Changelog
+
+- 2023-04-02 - Added `--weights` which allows you to see the average magnitude
+  and strength of your LoRA UNet and Text Encoder weights.
 
 ## Development
 
