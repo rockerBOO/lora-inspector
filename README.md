@@ -14,10 +14,12 @@
 <!--toc:end-->
 
 Inspect LoRA files for meta info (and hopefully quantitative analysis of the
-LoRA weights)
+LoRA weights).
 
 - view training parameters
 - extract metadata to be stored (we can store it in JSON currently)
+- only `safetensors` are supported (want to support all LoRA files)
+- only metadata from kohya-ss LoRA (want to parse all metadata in LoRA files)
 
 ---
 
