@@ -119,46 +119,73 @@ def parse(entries: dict[str, str]):
     return results
 
 
-def key_match(key, match):
+def key_start_match(key, match):
     return key[0 : len(match)] == match
+
+
+def key_match(key, match):
+    return match in key
 
 
 def find_vectors_weights(vectors):
     weight = ".weight"
 
-    unet_weight_results = {}
+    unet_attn_weight_results = {}
+    unet_conv_weight_results = {}
     text_encoder_weight_results = {}
 
     for k in vectors.keys():
         unet_down = "lora_unet_down_blocks_"
         unet_up = "lora_unet_up_blocks_"
         if (
-            key_match(k, unet_down)
-            or key_match(k, unet_up)
+            key_start_match(k, unet_down)
+            or key_start_match(k, unet_up)
             # or key_match(k, text_encoder)
         ):
             if k.endswith(weight):
-                unet_weight_results[k] = torch.flatten(vectors.get_tensor(k)).tolist()
+                if key_match(k, "conv"):
+                    unet_conv_weight_results[k] = torch.flatten(
+                        vectors.get_tensor(k)
+                    ).tolist()
+                else:
+                    unet_attn_weight_results[k] = torch.flatten(
+                        vectors.get_tensor(k)
+                    ).tolist()
 
         text_encoder = "lora_te_text_model_encoder_layers_"
-        if key_match(k, text_encoder):
+        if key_start_match(k, text_encoder):
             if k.endswith(weight):
                 text_encoder_weight_results[k] = torch.flatten(
                     vectors.get_tensor(k)
                 ).tolist()
 
-    num_results = len(unet_weight_results)
+    num_results = len(unet_attn_weight_results)
     sum_mag = 0  # average magnitude
     sum_str = 0  # average strength
-    for k in unet_weight_results.keys():
-        sum_mag += get_vector_data_magnitude(unet_weight_results[k])
-        sum_str += get_vector_data_strength(unet_weight_results[k])
+    for k in unet_attn_weight_results.keys():
+        sum_mag += get_vector_data_magnitude(unet_attn_weight_results[k])
+        sum_str += get_vector_data_strength(unet_attn_weight_results[k])
 
     avg_mag = sum_mag / num_results
     avg_str = sum_str / num_results
 
-    print(f"UNet weight average magnitude: {avg_mag}")
-    print(f"UNet weight average strength: {avg_str}")
+    print(f"UNet attention weight average magnitude: {avg_mag}")
+    print(f"UNet attention weight average strength: {avg_str}")
+
+    num_results = len(unet_conv_weight_results)
+
+    if num_results > 0:
+        sum_mag = 0  # average magnitude
+        sum_str = 0  # average strength
+        for k in unet_conv_weight_results.keys():
+            sum_mag += get_vector_data_magnitude(unet_conv_weight_results[k])
+            sum_str += get_vector_data_strength(unet_conv_weight_results[k])
+
+        avg_mag = sum_mag / num_results
+        avg_str = sum_str / num_results
+
+        print(f"UNet conv weight average magnitude: {avg_mag}")
+        print(f"UNet conv weight average strength: {avg_str}")
 
     num_results = len(text_encoder_weight_results)
 
@@ -174,7 +201,10 @@ def find_vectors_weights(vectors):
     print(f"Text Encoder weight average magnitude: {avg_mag}")
     print(f"Text Encoder weight average strength: {avg_str}")
 
-    return {"unet": unet_weight_results, "text_encoder": text_encoder_weight_results}
+    return {
+        "unet": unet_attn_weight_results,
+        "text_encoder": text_encoder_weight_results,
+    }
 
 
 def get_vector_data_strength(data: dict[int, Tensor]) -> float:
@@ -260,7 +290,7 @@ def parse_metadata(metadata):
             f"network dim/rank: {items['ss_network_dim']} alpha: {items['ss_network_alpha']} module: {items['ss_network_module']} {items.get('ss_network_args')}"
         )
         print(
-            f"noise_offset: {items.get('ss_noise_offset', None)} min_snr_gamma: {items.get('ss_min_snr_gamma', None)}"
+            f"noise_offset: {items.get('ss_noise_offset', None)} min_snr_gamma: {items.get('ss_min_snr_gamma', None)} clip_skip: {items.get('ss_clip_skip', None)}"
         )
 
         return items

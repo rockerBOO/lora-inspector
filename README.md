@@ -137,8 +137,9 @@ Text Encoder weight average strength: 0.00769676965767913
 
 ## Changelog
 
-- 2023-04-03 - Added noise_offset, min_snr_gamma (when added to kohya-ss), and network_args (for locon values)
-- 2023-04-02 - Added `--weights` which allows you to see the average magnitude
+- 2023-04-03 — Add clip_skip, segment off LoCon/conv layers in average weights
+- 2023-04-03 — Add noise_offset, min_snr_gamma (when added to kohya-ss), and network_args (for LoCon values)
+- 2023-04-02 — Add `--weights` which allows you to see the average magnitude
   and strength of your LoRA UNet and Text Encoder weights.
 
 ## Development
