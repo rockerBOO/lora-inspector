@@ -65,57 +65,28 @@ options:
 You can add a directory or file:
 
 ```bash
-$ python lora-inspector.py /mnt/900/training/cyberpunk-anime-21-min-snr
-0it [00:00, ?it/s]/mnt/900/training/cyberpunk-anime-21-min-snr/unet-1e-4-te-5e-5-noise-0.1-steps--cosine-Lion-networks.lora/last.safetensors
-train images: 1005 regularization images: 32000
-learning rate: 0.001 unet: 0.0001 text encoder: 5e-05
-epoch: 1 batches: 2025
-optimizer: lion_pytorch.lion_pytorch.Lion lr scheduler: cosine
-network dim/rank: 8.0 alpha: 4.0 module: networks.lora
+$ python lora-inspector.py /mnt/900/training/sets/cyberpunk-anime-24-2023-04-03-13:23:36-e94c9dd8 -w
+UNet weight average magnitude: 1.974654662580427
+UNet weight average strength: 0.015630576804489364
+Text Encoder weight average magnitude: 0.9055601234903398
+Text Encoder weight average strength: 0.009029422735480932
+/mnt/900/training/sets/cyberpunk-anime-24-2023-04-03-13:23:36-e94c9dd8/last.safetensors
+train images: 201 regularization images: 1600
+learning rate: 0.01 unet: 0.001 text encoder: 0.0001 scheduler: cosine
+epoch: 2 batches: 402 optimizer: torch.optim.adamw.AdamW
+network dim/rank: 8.0 alpha: 4.0 module: networks.lora {'conv_dim': '32', 'conv_alpha': '0.3'}
+noise_offset: 0.1 min_snr_gamma: 1.0
 ----------------------
-1it [00:00,  2.04it/s]/mnt/900/training/cyberpunk-anime-21-min-snr/unet-1-te-1-noise-0.1-steps--linear-AdaFactor-networks.lora/last.safetensors
-train images: 1005 regularization images: 32000
-learning rate: None unet: None text encoder: None
-epoch: 1 batches: 2025
-optimizer: transformers.optimization.Adafactor(relative_step=True) lr scheduler: adafactor:1.0
-network dim/rank: 8.0 alpha: 4.0 module: networks.lora
-----------------------
-/mnt/900/training/cyberpunk-anime-21-min-snr/unet-1e-4-te-5e-5-noise-0.1-steps--linear-AdamW-networks.lora/last.safetensors
-train images: 1005 regularization images: 32000
-learning rate: 0.0001 unet: 0.0001 text encoder: 5e-05
-epoch: 1 batches: 2025
-optimizer: torch.optim.adamw.AdamW lr scheduler: linear
-network dim/rank: 8.0 alpha: 4.0 module: networks.lora
-----------------------
-/mnt/900/training/cyberpunk-anime-21-min-snr/unet-1e-4-te-5e-5-noise-0.1-steps-epoch--2-cosine-AdamW-networks.lora/last.safetensors
-train images: 1005 regularization images: 32000
-learning rate: 0.0001 unet: 0.0001 text encoder: 5e-05
-epoch: 2 batches: 2025
-optimizer: torch.optim.adamw.AdamW lr scheduler: cosine
-network dim/rank: 8.0 alpha: 4.0 module: networks.lora
-----------------------
-/mnt/900/training/cyberpunk-anime-21-min-snr/unet-1e-4-te-5e-5-noise-0.1-steps-epoch--2-cosine-AdamW-networks.lora/epoch-000001.safetensors
-train images: 1005 regularization images: 32000
-learning rate: 0.0001 unet: 0.0001 text encoder: 5e-05
-epoch: 1 batches: 2025
-optimizer: torch.optim.adamw.AdamW lr scheduler: cosine
-network dim/rank: 8.0 alpha: 4.0 module: networks.lora
-----------------------
-/mnt/900/training/cyberpunk-anime-21-min-snr/unet-1.15-te-1.15-noise-0.1-steps--linear-DAdaptation-networks.lora/last.safetensors
-train images: 1005 regularization images: 32000
-learning rate: 1.15 unet: 1.15 text encoder: 1.15
-epoch: 1 batches: 2025
-optimizer: dadaptation.dadapt_adam.DAdaptAdam lr scheduler: linear
-network dim/rank: 8.0 alpha: 4.0 module: networks.lora
-----------------------
-/mnt/900/training/cyberpunk-anime-21-min-snr/unet-1.0-te-1.0-noise-0.1-steps--linear-DAdaptation-networks.lora/last.safetensors
-train images: 1005 regularization images: 32000
-learning rate: 1.0 unet: 1.0 text encoder: 1.0
-epoch: 1 batches: 2025
-optimizer: dadaptation.dadapt_adam.DAdaptAdam lr scheduler: linear
-network dim/rank: 8.0 alpha: 4.0 module: networks.lora
-----------------------
-7it [00:00, 14.12it/s]
+UNet weight average magnitude: 1.9316962578548313
+UNet weight average strength: 0.015348419610733969
+Text Encoder weight average magnitude: 0.9034643649275405
+Text Encoder weight average strength: 0.009012302642521
+/mnt/900/training/sets/cyberpunk-anime-24-2023-04-03-13:23:36-e94c9dd8/epoch-000001.safetensors
+train images: 201 regularization images: 1600
+learning rate: 0.01 unet: 0.001 text encoder: 0.0001 scheduler: cosine
+epoch: 1 batches: 402 optimizer: torch.optim.adamw.AdamW
+network dim/rank: 8.0 alpha: 4.0 module: networks.lora {'conv_dim': '32', 'conv_alpha': '0.3'}
+noise_offset: 0.1 min_snr_gamma: 1.0
 ```
 
 ```bash
@@ -166,6 +137,7 @@ Text Encoder weight average strength: 0.00769676965767913
 
 ## Changelog
 
+- 2023-04-03 - Added noise_offset, min_snr_gamma (when added to kohya-ss), and network_args (for locon values)
 - 2023-04-02 - Added `--weights` which allows you to see the average magnitude
   and strength of your LoRA UNet and Text Encoder weights.
 

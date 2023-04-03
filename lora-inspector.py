@@ -4,7 +4,6 @@ import os
 from functools import reduce
 from pathlib import Path
 import argparse
-from tqdm import tqdm
 from datetime import datetime
 from typing import Callable
 from torch import Tensor
@@ -56,7 +55,6 @@ schema: dict[str, str] = {
     "ss_color_aug": "bool",
     "ss_flip_aug": "bool",
     "ss_lr_warmup_steps": "int",
-    "ss_network_module": "str",
     "ss_lr_scheduler": "str",
     "ss_num_epochs": "int",
     "ss_mixed_precision": "str",
@@ -70,6 +68,8 @@ schema: dict[str, str] = {
     "ss_clip_skip": "int",
     "ss_dataset_dirs": "json",
     "ss_training_comment": "str",
+    "ss_network_module": "str",
+    "ss_network_args": "json",
     "ss_network_alpha": "float",
     "ss_network_dim": "float",
     "ss_reg_dataset_dirs": "json",
@@ -81,7 +81,6 @@ schema: dict[str, str] = {
     "ss_min_bucket_reso": "int",
     "ss_bucket_no_upscale": "bool",
     "ss_prior_loss_weight": "float",
-    "ss_network_args": "json",
     "ss_enable_bucket": "bool",
     "ss_num_train_images": "int",
     "ss_lowram": "bool",
@@ -90,6 +89,7 @@ schema: dict[str, str] = {
     "ss_session_id": "str",
     "ss_max_grad_norm": "float",
     "ss_noise_offset": "float",
+    "ss_min_snr_gamma": "float",
     "ss_sd_model_hash": "str",
     "ss_new_sd_model_hash": "str",
     "ss_datasets": "json",
@@ -249,18 +249,18 @@ def parse_metadata(metadata):
             print("Possibly not enough regularization images to training images.")
 
         print(
-            f"learning rate: {items['ss_learning_rate']} unet: {items['ss_unet_lr']} text encoder: {items['ss_text_encoder_lr']}"
+            f"learning rate: {items['ss_learning_rate']} unet: {items['ss_unet_lr']} text encoder: {items['ss_text_encoder_lr']} scheduler: {items['ss_lr_scheduler']}"
         )
 
         print(
-            f"epoch: {items['ss_epoch']} batches: {items['ss_num_batches_per_epoch']}"
-        )
-        print(
-            f"optimizer: {items.get('ss_optimizer', '')} lr scheduler: {items['ss_lr_scheduler']}"
+            f"epoch: {items['ss_epoch']} batches: {items['ss_num_batches_per_epoch']} optimizer: {items.get('ss_optimizer', '')}"
         )
 
         print(
-            f"network dim/rank: {items['ss_network_dim']} alpha: {items['ss_network_alpha']} module: {items['ss_network_module']}"
+            f"network dim/rank: {items['ss_network_dim']} alpha: {items['ss_network_alpha']} module: {items['ss_network_module']} {items.get('ss_network_args')}"
+        )
+        print(
+            f"noise_offset: {items.get('ss_noise_offset', None)} min_snr_gamma: {items.get('ss_min_snr_gamma', None)}"
         )
 
         return items
@@ -275,11 +275,9 @@ def parse_metadata(metadata):
 def process(args):
     file = args.lora_file_or_dir
     if os.path.isdir(file):
-        progress = tqdm(find_safetensor_files(file))
         results = []
-        for path in progress:
+        for path in find_safetensor_files(file):
             results.append(process_safetensor_file(path, args))
-            progress.update(1)
 
         return results
     else:
