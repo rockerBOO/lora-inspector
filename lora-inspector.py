@@ -264,7 +264,7 @@ def process_safetensor_file(file, args):
 
 
 def parse_metadata(metadata):
-    if "ss_tag_frequency" in metadata:
+    if "ss_network_module" in metadata:
         items = parse(metadata)
 
         # print(json.dumps(items, indent=4, sort_keys = True, default=str))
