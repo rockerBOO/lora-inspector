@@ -13,6 +13,8 @@
   - [Reference](#reference)
 <!--toc:end-->
 
+![lora-inspector](https://user-images.githubusercontent.com/15027/230981999-1af9ec4e-4c05-40bc-a10a-b825c73b1013.png)
+
 Inspect LoRA files for meta info (and hopefully quantitative analysis of the
 LoRA weights).
 
