@@ -130,48 +130,127 @@ def key_match(key, match):
 
 def find_vectors_weights(vectors):
     weight = ".weight"
+    isFedPara = False
 
-    unet_attn_weight_results = {}
-    unet_conv_weight_results = {}
-    text_encoder_weight_results = {}
+    unet_attn_weight_results: dict[str, list[Tensor]] = {}
+    fed_para_unet_attn_weight_results: dict[str, list[Tensor]] = {}
+    unet_conv_weight_results: dict[str, list[Tensor]] = {}
+    fed_para_unet_conv_weight_results: dict[str, list[Tensor]] = {}
+    text_encoder_weight_results: dict[str, list[Tensor]] = {}
+    fed_para_text_encoder_weight_results: dict[str, list[Tensor]] = {}
 
     for k in vectors.keys():
         unet_down = "lora_unet_down_blocks_"
         unet_up = "lora_unet_up_blocks_"
-        if (
-            key_start_match(k, unet_down)
-            or key_start_match(k, unet_up)
-            # or key_match(k, text_encoder)
-        ):
+        if key_start_match(k, unet_down) or key_start_match(k, unet_up):
             if k.endswith(weight):
                 if key_match(k, "conv"):
-                    unet_conv_weight_results[k] = torch.flatten(
-                        vectors.get_tensor(k)
-                    ).tolist()
+                    unet_conv_weight_results[k] = vectors.get_tensor(k)
+
                 else:
-                    unet_attn_weight_results[k] = torch.flatten(
-                        vectors.get_tensor(k)
-                    ).tolist()
+                    unet_attn_weight_results[k] = vectors.get_tensor(k)
+
+            elif ".hada" in k:
+                isFedPara = True
+                # print(k)
+                if key_match(k, "conv"):
+                    fed_para_unet_conv_weight_results[k] = vectors.get_tensor(k)
+                else:
+                    fed_para_unet_attn_weight_results[k] = vectors.get_tensor(k)
 
         text_encoder = "lora_te_text_model_encoder_layers_"
         if key_start_match(k, text_encoder):
             if k.endswith(weight):
-                text_encoder_weight_results[k] = torch.flatten(
-                    vectors.get_tensor(k)
-                ).tolist()
+                text_encoder_weight_results[k] = vectors.get_tensor(k)
 
-    num_results = len(unet_attn_weight_results)
+            elif ".hada" in k:
+                isFedPara = True
+                fed_para_text_encoder_weight_results[k] = vectors.get_tensor(k)
+
+    def get_fed_para_weight(self):
+        d_weight = self.hada_w1_a @ self.hada_w1_b
+        d_weight *= self.hada_w2_a @ self.hada_w2_b
+        return (d_weight).reshape(self.shape)
+
+    def reduce_fed_para(acc: dict[str, list[Tensor]], k, v):
+        parts = k.split(".")
+
+        if "hada" in parts[1]:
+            a = acc.setdefault(parts[0], {})
+            if a is None:
+                a = {}
+
+            a[parts[1]] = v
+
+        return acc
+
+    fed_para_results = {}
+
+    if isFedPara:
+        # reduce weights down
+        for k in fed_para_unet_attn_weight_results.keys():
+            # parts = k.split(".")
+
+            reduce_fed_para(fed_para_results, k, fed_para_unet_attn_weight_results[k])
+
+    num_results = len(fed_para_results)
+    print(f"fed_para att weight {len(fed_para_unet_attn_weight_results)}")
+    print(f"unet {num_results}")
     sum_mag = 0  # average magnitude
     sum_str = 0  # average strength
-    for k in unet_attn_weight_results.keys():
-        sum_mag += get_vector_data_magnitude(unet_attn_weight_results[k])
-        sum_str += get_vector_data_strength(unet_attn_weight_results[k])
+    d_weights = {}
+    i=0
+    for k in fed_para_results.keys():
+        layer = fed_para_results[k]
+        # hada_w1_a
+        # hada_w1_b
+        # hada_w2_a
+        # hada_w2_b
+        # print(layer)
+
+        d_weight = layer.get("hada_w1_a") @ layer.get("hada_w1_b")
+        d_weight *= layer.get("hada_w2_a") @ layer.get("hada_w2_b")
+
+        d_weights.setdefault(k, d_weight)
+
+        # print(layer, d_weight)
+        print(i)
+        i = i + 1
+
+    i  = 0
+    for k in d_weights.keys():
+        s_mag = get_vector_data_magnitude(torch.flatten(d_weights[k]).tolist())
+        s_str = get_vector_data_strength(torch.flatten(d_weights[k]).tolist())
+        i = i + 1
+        print(f"{k:100} {i:3} {s_mag:20} {s_str:14}")
+
+        sum_mag += s_mag
+        sum_str += s_str
 
     avg_mag = sum_mag / num_results
     avg_str = sum_str / num_results
 
-    print(f"UNet attention weight average magnitude: {avg_mag}")
-    print(f"UNet attention weight average strength: {avg_str}")
+    print(f"UNet fed para weight average magnitude: {avg_mag}")
+    print(f"UNet fed para weight average strength: {avg_str}")
+
+    num_results = len(unet_attn_weight_results)
+    if num_results > 0:
+        print(f"unet {num_results}")
+        sum_mag = 0  # average magnitude
+        sum_str = 0  # average strength
+        for k in unet_attn_weight_results.keys():
+            sum_mag += get_vector_data_magnitude(
+                torch.flatten(unet_attn_weight_results[k]).tolist()
+            )
+            sum_str += get_vector_data_strength(
+                torch.flatten(unet_attn_weight_results[k]).tolist()
+            )
+
+        avg_mag = sum_mag / num_results
+        avg_str = sum_str / num_results
+
+        print(f"UNet attention weight average magnitude: {avg_mag}")
+        print(f"UNet attention weight average strength: {avg_str}")
 
     num_results = len(unet_conv_weight_results)
 
@@ -179,8 +258,12 @@ def find_vectors_weights(vectors):
         sum_mag = 0  # average magnitude
         sum_str = 0  # average strength
         for k in unet_conv_weight_results.keys():
-            sum_mag += get_vector_data_magnitude(unet_conv_weight_results[k])
-            sum_str += get_vector_data_strength(unet_conv_weight_results[k])
+            sum_mag += get_vector_data_magnitude(
+                torch.flatten(unet_conv_weight_results[k]).tolist()
+            )
+            sum_str += get_vector_data_strength(
+                torch.flatten(unet_conv_weight_results[k]).tolist()
+            )
 
         avg_mag = sum_mag / num_results
         avg_str = sum_str / num_results
@@ -189,18 +272,24 @@ def find_vectors_weights(vectors):
         print(f"UNet conv weight average strength: {avg_str}")
 
     num_results = len(text_encoder_weight_results)
+    print(f"te {num_results}")
 
-    sum_mag = 0  # average magnitude
-    sum_str = 0  # average strength
-    for k in text_encoder_weight_results.keys():
-        sum_mag += get_vector_data_magnitude(text_encoder_weight_results[k])
-        sum_str += get_vector_data_strength(text_encoder_weight_results[k])
+    if num_results > 0:
+        sum_mag = 0  # average magnitude
+        sum_str = 0  # average strength
+        for k in text_encoder_weight_results.keys():
+            sum_mag += get_vector_data_magnitude(
+                torch.flatten(text_encoder_weight_results[k]).tolist()
+            )
+            sum_str += get_vector_data_strength(
+                torch.flatten(text_encoder_weight_results[k]).tolist()
+            )
 
-    avg_mag = sum_mag / num_results
-    avg_str = sum_str / num_results
+        avg_mag = sum_mag / num_results
+        avg_str = sum_str / num_results
 
-    print(f"Text Encoder weight average magnitude: {avg_mag}")
-    print(f"Text Encoder weight average strength: {avg_str}")
+        print(f"Text Encoder weight average magnitude: {avg_mag}")
+        print(f"Text Encoder weight average strength: {avg_str}")
 
     return {
         "unet": unet_attn_weight_results,
