@@ -141,6 +141,7 @@ Text Encoder weight average strength: 0.00769676965767913
 
 ## Changelog
 
+- 2023-04-12 — Add gradient norm, gradient checkpoint metadata
 - 2023-04-03 — Add clip_skip, segment off LoCon/conv layers in average weights
 - 2023-04-03 — Add noise_offset, min_snr_gamma (when added to kohya-ss), and
   network_args (for LoCon values)
