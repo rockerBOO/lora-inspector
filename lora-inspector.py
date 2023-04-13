@@ -56,6 +56,7 @@ schema: dict[str, str] = {
     "ss_flip_aug": "bool",
     "ss_lr_warmup_steps": "int",
     "ss_lr_scheduler": "str",
+    "ss_lr_scheduler_power": "float",
     "ss_num_epochs": "int",
     "ss_mixed_precision": "str",
     "ss_shuffle_caption": "bool",
@@ -264,8 +265,16 @@ def process_safetensor_file(file, args):
 
 
 def parse_metadata(metadata):
-    if "ss_network_module" in metadata:
+    if "sshs_model_hash" in metadata:
         items = parse(metadata)
+
+        # TODO if we are missing this value, they may not be saving the metadata 
+        # to the file or are missing key components. Should evaluate if we need 
+        # to do more in the case that this is missing when we get more examples
+        if "ss_network_dim" not in items:
+            for item in items:
+                print(item)
+            return items
 
         # print(json.dumps(items, indent=4, sort_keys = True, default=str))
 

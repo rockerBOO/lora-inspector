@@ -1,6 +1,7 @@
 # LoRA inspector
 
 <!--toc:start-->
+
 - [LoRA inspector](#lora-inspector)
   - [Install](#install)
   - [Usage](#usage)
@@ -11,7 +12,7 @@
   - [Development](#development)
   - [Future](#future)
   - [Reference](#reference)
-<!--toc:end-->
+  <!--toc:end-->
 
 ![lora-inspector](https://user-images.githubusercontent.com/15027/230981999-1af9ec4e-4c05-40bc-a10a-b825c73b1013.png)
 
@@ -106,7 +107,8 @@ network dim/rank: 8.0 alpha: 4.0 module: networks.lora
 
 We also have support for saving the meta that is extracted and converted from
 strings. We can then save those to a JSON file. These will save the metadata
-into `meta/alorafile.safetensors-{session_id}.json` in the meta directory.
+into `meta/alorafile.safetensors-{session_id}.json` in the current working
+directory.
 
 ```bash
 $ python lora-inspector.py ~/loras/alorafile.safetensors --save_meta
@@ -140,9 +142,10 @@ Text Encoder weight average strength: 0.00769676965767913
 ## Changelog
 
 - 2023-04-03 — Add clip_skip, segment off LoCon/conv layers in average weights
-- 2023-04-03 — Add noise_offset, min_snr_gamma (when added to kohya-ss), and network_args (for LoCon values)
-- 2023-04-02 — Add `--weights` which allows you to see the average magnitude
-  and strength of your LoRA UNet and Text Encoder weights.
+- 2023-04-03 — Add noise_offset, min_snr_gamma (when added to kohya-ss), and
+  network_args (for LoCon values)
+- 2023-04-02 — Add `--weights` which allows you to see the average magnitude and
+  strength of your LoRA UNet and Text Encoder weights.
 
 ## Development
 
