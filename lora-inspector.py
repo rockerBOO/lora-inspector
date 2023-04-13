@@ -39,7 +39,7 @@ schema: dict[str, str] = {
     "ss_full_fp16": "bool",
     "ss_vae_hash": "str",
     "ss_gradient_checkpoint": "bool",
-    "ss_output_name": "bool",
+    "ss_output_name": "str",
     "ss_bucket_info": "json",
     "sshs_model_hash": "str",
     "sshs_legacy_hash": "str",
@@ -128,6 +128,11 @@ def key_match(key, match):
     return match in key
 
 
+def plot_vectors(data: pandas.DataFrame):
+
+
+# lora_unet_down_blocks_0_attentions_0_transformer_blocks_0_ff_net_0_proj.lora_up.weight
+# TODO: Reduce this function to only finding results to be displayed/exported elsewhere.
 def find_vectors_weights(vectors):
     weight = ".weight"
     isFedPara = False
@@ -139,6 +144,7 @@ def find_vectors_weights(vectors):
     text_encoder_weight_results: dict[str, list[Tensor]] = {}
     fed_para_text_encoder_weight_results: dict[str, list[Tensor]] = {}
 
+    # print(vectors.keys())
     for k in vectors.keys():
         unet_down = "lora_unet_down_blocks_"
         unet_up = "lora_unet_up_blocks_"
@@ -193,45 +199,95 @@ def find_vectors_weights(vectors):
 
             reduce_fed_para(fed_para_results, k, fed_para_unet_attn_weight_results[k])
 
-    num_results = len(fed_para_results)
-    print(f"fed_para att weight {len(fed_para_unet_attn_weight_results)}")
-    print(f"unet {num_results}")
-    sum_mag = 0  # average magnitude
-    sum_str = 0  # average strength
-    d_weights = {}
-    i=0
-    for k in fed_para_results.keys():
-        layer = fed_para_results[k]
-        # hada_w1_a
-        # hada_w1_b
-        # hada_w2_a
-        # hada_w2_b
-        # print(layer)
+        num_results = len(fed_para_results)
 
-        d_weight = layer.get("hada_w1_a") @ layer.get("hada_w1_b")
-        d_weight *= layer.get("hada_w2_a") @ layer.get("hada_w2_b")
+        if num_results > 0:
+            print(f"fed_para att weight {len(fed_para_unet_attn_weight_results)}")
+            print(f"unet {num_results}")
+            sum_mag = 0  # average magnitude
+            sum_str = 0  # average strength
+            d_weights = {}
+            i=0
+            for k in fed_para_results.keys():
+                layer = fed_para_results[k]
+                # hada_w1_a
+                # hada_w1_b
+                # hada_w2_a
+                # hada_w2_b
+                # print(layer)
 
-        d_weights.setdefault(k, d_weight)
+                d_weight = layer.get("hada_w1_a") @ layer.get("hada_w1_b")
+                d_weight *= layer.get("hada_w2_a") @ layer.get("hada_w2_b")
 
-        # print(layer, d_weight)
-        print(i)
-        i = i + 1
+                d_weights.setdefault(k, d_weight)
 
-    i  = 0
-    for k in d_weights.keys():
-        s_mag = get_vector_data_magnitude(torch.flatten(d_weights[k]).tolist())
-        s_str = get_vector_data_strength(torch.flatten(d_weights[k]).tolist())
-        i = i + 1
-        print(f"{k:100} {i:3} {s_mag:20} {s_str:14}")
+                # print(layer, d_weight)
+                print(i)
+                i = i + 1
 
-        sum_mag += s_mag
-        sum_str += s_str
+            i  = 0
+            for k in d_weights.keys():
+                s_mag = get_vector_data_magnitude(torch.flatten(d_weights[k]).tolist())
+                s_str = get_vector_data_strength(torch.flatten(d_weights[k]).tolist())
+                i = i + 1
+                print(f"{k:75} {i:3} {s_mag:20} {s_str:14} {len(d_weights[k])}")
 
-    avg_mag = sum_mag / num_results
-    avg_str = sum_str / num_results
+                sum_mag += s_mag
+                sum_str += s_str
 
-    print(f"UNet fed para weight average magnitude: {avg_mag}")
-    print(f"UNet fed para weight average strength: {avg_str}")
+            avg_mag = sum_mag / num_results
+            avg_str = sum_str / num_results
+
+            print(f"UNet fed para (LoHA) weight average magnitude: {avg_mag}")
+            print(f"UNet fed para (LoHA) weight average strength: {avg_str}")
+
+        for k in fed_para_text_encoder_weight_results.keys():
+            # parts = k.split(".")
+
+            print(k)
+            reduce_fed_para(fed_para_results, k, fed_para_unet_attn_weight_results[k])
+
+        num_results = len(fed_para_results)
+
+        if num_results > 0:
+            print(f"fed_para TE weight {len(fed_para_text_encoder_weight_results)}")
+            print(f"te {num_results}")
+            sum_mag = 0  # average magnitude
+            sum_str = 0  # average strength
+            d_weights = {}
+            i=0
+            for k in fed_para_results.keys():
+                layer = fed_para_results[k]
+                # hada_w1_a
+                # hada_w1_b
+                # hada_w2_a
+                # hada_w2_b
+                # print(layer)
+
+                d_weight = layer.get("hada_w1_a") @ layer.get("hada_w1_b")
+                d_weight *= layer.get("hada_w2_a") @ layer.get("hada_w2_b")
+
+                d_weights.setdefault(k, d_weight)
+
+                # print(layer, d_weight)
+                print(i)
+                i = i + 1
+
+            i  = 0
+            for k in d_weights.keys():
+                s_mag = get_vector_data_magnitude(torch.flatten(d_weights[k]).tolist())
+                s_str = get_vector_data_strength(torch.flatten(d_weights[k]).tolist())
+                i = i + 1
+                print(f"{k:75} {i:3} {s_mag:20} {s_str:14}")
+
+                sum_mag += s_mag
+                sum_str += s_str
+
+            avg_mag = sum_mag / num_results
+            avg_str = sum_str / num_results
+
+            print(f"UNet fed para (LoHA) text encoder weight average magnitude: {avg_mag}")
+            print(f"UNet fed para (LoHA) text encoder weight average strength: {avg_str}")
 
     num_results = len(unet_attn_weight_results)
     if num_results > 0:
@@ -370,18 +426,13 @@ def parse_metadata(metadata):
         print(
             f"train images: {items['ss_num_train_images']} regularization images: {items['ss_num_reg_images']}"
         )
-        if (
-            items["ss_num_reg_images"] > 0
-            and items["ss_num_reg_images"] < items["ss_num_train_images"]
-        ):
-            print("Possibly not enough regularization images to training images.")
 
         print(
-            f"learning rate: {items['ss_learning_rate']} unet: {items['ss_unet_lr']} text encoder: {items['ss_text_encoder_lr']} scheduler: {items['ss_lr_scheduler']}"
+            f"learning rate: {items['ss_learning_rate']} unet: {items['ss_unet_lr']} text encoder: {items['ss_text_encoder_lr']} scheduler: {items['ss_lr_scheduler']} {items.get('ss_lr_scheduler_power', '')}"
         )
 
         print(
-            f"epoch: {items['ss_epoch']} batches: {items['ss_num_batches_per_epoch']} optimizer: {items.get('ss_optimizer', '')}"
+            f"epoch: {items['ss_epoch']} batch: {items.get('ss_batch_size_per_device', '')} {items.get('ss_total_batch_size', '')} GA: {items.get('ss_gradient_accumulation_steps')} optimizer: {items.get('ss_optimizer', '')}"
         )
 
         print(
@@ -390,6 +441,8 @@ def parse_metadata(metadata):
         print(
             f"noise_offset: {items.get('ss_noise_offset', None)} min_snr_gamma: {items.get('ss_min_snr_gamma', None)} clip_skip: {items.get('ss_clip_skip', None)}"
         )
+
+        print(f"gradient norm: {items.get('ss_max_grad_norm')} checkpointing: {items.get('ss_gradient_checkpointing')}")
 
         return items
     else:
@@ -416,7 +469,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "lora_file_or_dir", type=str, help="Directory containing the lora files"
+        "lora_file_or_dir", type=str, help="File or directory containing the lora files"
     )
 
     parser.add_argument(
@@ -430,7 +483,7 @@ if __name__ == "__main__":
         "-w",
         "--weights",
         action="store_true",
-        help="Find the average weights",
+        help="Find the average weights of the unet and text encoders",
     )
 
     args = parser.parse_args()
