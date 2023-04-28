@@ -128,7 +128,37 @@ def key_match(key, match):
     return match in key
 
 
-def plot_vectors(data: pandas.DataFrame):
+# TODO: This function should handle abstracting the possible resulting weights
+# but the format it is currently in makes it difficult to work with
+# We are abstracting the vector names and getting the tensors at these locations
+def parse_unet_blocks(vectors):
+    for k in vectors.keys():
+        unet_down = "lora_unet_down_blocks_"
+        unet_up = "lora_unet_up_blocks_"
+        if key_start_match(k, unet_down) or key_start_match(k, unet_up):
+            if k.endswith(weight):
+                if key_match(k, "conv"):
+                    unet_conv_weight_results[k] = vectors.get_tensor(k)
+
+                else:
+                    unet_attn_weight_results[k] = vectors.get_tensor(k)
+
+            elif ".hada" in k:
+                isFedPara = True
+                # print(k)
+                if key_match(k, "conv"):
+                    fed_para_unet_conv_weight_results[k] = vectors.get_tensor(k)
+                else:
+                    fed_para_unet_attn_weight_results[k] = vectors.get_tensor(k)
+
+        text_encoder = "lora_te_text_model_encoder_layers_"
+        if key_start_match(k, text_encoder):
+            if k.endswith(weight):
+                text_encoder_weight_results[k] = vectors.get_tensor(k)
+
+            elif ".hada" in k:
+                isFedPara = True
+                fed_para_text_encoder_weight_results[k] = vectors.get_tensor(k)
 
 
 # lora_unet_down_blocks_0_attentions_0_transformer_blocks_0_ff_net_0_proj.lora_up.weight
@@ -207,7 +237,7 @@ def find_vectors_weights(vectors):
             sum_mag = 0  # average magnitude
             sum_str = 0  # average strength
             d_weights = {}
-            i=0
+            i = 0
             for k in fed_para_results.keys():
                 layer = fed_para_results[k]
                 # hada_w1_a
@@ -225,7 +255,7 @@ def find_vectors_weights(vectors):
                 print(i)
                 i = i + 1
 
-            i  = 0
+            i = 0
             for k in d_weights.keys():
                 s_mag = get_vector_data_magnitude(torch.flatten(d_weights[k]).tolist())
                 s_str = get_vector_data_strength(torch.flatten(d_weights[k]).tolist())
@@ -255,7 +285,7 @@ def find_vectors_weights(vectors):
             sum_mag = 0  # average magnitude
             sum_str = 0  # average strength
             d_weights = {}
-            i=0
+            i = 0
             for k in fed_para_results.keys():
                 layer = fed_para_results[k]
                 # hada_w1_a
@@ -273,7 +303,7 @@ def find_vectors_weights(vectors):
                 print(i)
                 i = i + 1
 
-            i  = 0
+            i = 0
             for k in d_weights.keys():
                 s_mag = get_vector_data_magnitude(torch.flatten(d_weights[k]).tolist())
                 s_str = get_vector_data_strength(torch.flatten(d_weights[k]).tolist())
@@ -384,29 +414,20 @@ def save_metadata(file, metadata):
 
 
 def process_safetensor_file(file, args):
-    # if os.path.isdir(file):
-    #     progress = tqdm(find_safetensor_files(file))
-    #     results = []
-    #     for path in progress:
-    #         results.append(process_safetensor_file(path))
-    #         progress.update(1)
-    #
-    #     return results
-    # else:
     with safe_open(file, framework="pt", device="cpu") as f:
         metadata = f.metadata()
 
         if args.weights:
             find_vectors_weights(f)
 
-        if metadata is not None:
-            filename = os.path.basename(file)
-            print(file)
-            parsed = parse_metadata(metadata)
-            parsed["file"] = file
-            parsed["filename"] = filename
-            print("----------------------")
-            return parsed
+    if metadata is not None:
+        filename = os.path.basename(file)
+        print(file)
+        parsed = parse_metadata(metadata)
+        parsed["file"] = file
+        parsed["filename"] = filename
+        print("----------------------")
+        return parsed
 
 
 def parse_metadata(metadata):
@@ -417,8 +438,8 @@ def parse_metadata(metadata):
         # to the file or are missing key components. Should evaluate if we need 
         # to do more in the case that this is missing when we get more examples
         if "ss_network_dim" not in items:
-            for item in items:
-                print(item)
+            for key in items.keys():
+                print(items, items[key])
             return items
 
         # print(json.dumps(items, indent=4, sort_keys = True, default=str))
@@ -442,7 +463,9 @@ def parse_metadata(metadata):
             f"noise_offset: {items.get('ss_noise_offset', None)} min_snr_gamma: {items.get('ss_min_snr_gamma', None)} clip_skip: {items.get('ss_clip_skip', None)}"
         )
 
-        print(f"gradient norm: {items.get('ss_max_grad_norm')} checkpointing: {items.get('ss_gradient_checkpointing')}")
+        print(
+            f"gradient norm: {items.get('ss_max_grad_norm')} checkpointing: {items.get('ss_gradient_checkpointing')}"
+        )
 
         return items
     else:
