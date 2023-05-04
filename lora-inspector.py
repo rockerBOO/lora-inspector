@@ -90,6 +90,8 @@ schema: dict[str, str] = {
     "ss_session_id": "str",
     "ss_max_grad_norm": "float",
     "ss_noise_offset": "float",
+    "ss_multires_noise_discount": "float",
+    "ss_multires_noise_iterations": "float",
     "ss_min_snr_gamma": "float",
     "ss_sd_model_hash": "str",
     "ss_new_sd_model_hash": "str",
@@ -268,8 +270,8 @@ def parse_metadata(metadata):
     if "sshs_model_hash" in metadata:
         items = parse(metadata)
 
-        # TODO if we are missing this value, they may not be saving the metadata 
-        # to the file or are missing key components. Should evaluate if we need 
+        # TODO if we are missing this value, they may not be saving the metadata
+        # to the file or are missing key components. Should evaluate if we need
         # to do more in the case that this is missing when we get more examples
         if "ss_network_dim" not in items:
             for item in items:
@@ -298,9 +300,22 @@ def parse_metadata(metadata):
         print(
             f"network dim/rank: {items['ss_network_dim']} alpha: {items['ss_network_alpha']} module: {items['ss_network_module']} {items.get('ss_network_args')}"
         )
-        print(
-            f"noise_offset: {items.get('ss_noise_offset', None)} min_snr_gamma: {items.get('ss_min_snr_gamma', None)} clip_skip: {items.get('ss_clip_skip', None)}"
-        )
+
+        def item(items, key, name):
+            if key in items and items.get(key) is not None:
+                return f"{name}: {items.get(key, '')}"
+
+            return ""
+
+        results = [
+            item(items, "ss_noise_offset", "noise offset"),
+            item(items, "ss_multires_noise_iterations", "multires noise iterations"),
+            item(items, "ss_multires_noise_discount", "multires noise discount"),
+            item(items, "ss_min_snr_gamma", "min snr gamma"),
+            item(items, "ss_clip_skip", "clip_skip"),
+        ]
+
+        print(" ".join(results).strip(" "))
 
         return items
     else:
