@@ -192,17 +192,18 @@ def find_vectors_weights(vectors):
 
     num_results = len(text_encoder_weight_results)
 
-    sum_mag = 0  # average magnitude
-    sum_str = 0  # average strength
-    for k in text_encoder_weight_results.keys():
-        sum_mag += get_vector_data_magnitude(text_encoder_weight_results[k])
-        sum_str += get_vector_data_strength(text_encoder_weight_results[k])
+    if num_results > 0:
+        sum_mag = 0  # average magnitude
+        sum_str = 0  # average strength
+        for k in text_encoder_weight_results.keys():
+            sum_mag += get_vector_data_magnitude(text_encoder_weight_results[k])
+            sum_str += get_vector_data_strength(text_encoder_weight_results[k])
 
-    avg_mag = sum_mag / num_results
-    avg_str = sum_str / num_results
+        avg_mag = sum_mag / num_results
+        avg_str = sum_str / num_results
 
-    print(f"Text Encoder weight average magnitude: {avg_mag}")
-    print(f"Text Encoder weight average strength: {avg_str}")
+        print(f"Text Encoder weight average magnitude: {avg_mag}")
+        print(f"Text Encoder weight average strength: {avg_str}")
 
     return {
         "unet": unet_attn_weight_results,
