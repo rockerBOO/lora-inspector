@@ -237,29 +237,21 @@ def save_metadata(file, metadata):
         print(f"creating directory {dir}")
         os.mkdir(dir)
 
-    with open(dir + os.path.basename(file) + ".json", "w+") as f:
+    with open(f"{dir}{os.path.basename(file)}.json", "w+") as f:
         json.dump(metadata, f, default=str)
 
 
 def process_safetensor_file(file, args):
-    # if os.path.isdir(file):
-    #     progress = tqdm(find_safetensor_files(file))
-    #     results = []
-    #     for path in progress:
-    #         results.append(process_safetensor_file(path))
-    #         progress.update(1)
-    #
-    #     return results
-    # else:
     with safe_open(file, framework="pt", device="cpu") as f:
         metadata = f.metadata()
+
+        filename = os.path.basename(file)
+        print(file)
 
         if args.weights:
             find_vectors_weights(f)
 
         if metadata is not None:
-            filename = os.path.basename(file)
-            print(file)
             parsed = parse_metadata(metadata)
             parsed["file"] = file
             parsed["filename"] = filename
@@ -279,7 +271,7 @@ def parse_metadata(metadata):
                 print(item)
             return items
 
-        # print(json.dumps(items, indent=4, sort_keys = True, default=str))
+        # print(json.dumps(items, indent=4, sort_keys=True, default=str))
 
         print(
             f"train images: {items['ss_num_train_images']} regularization images: {items['ss_num_reg_images']}"
@@ -387,7 +379,7 @@ if __name__ == "__main__":
                 print(f"newfile: {newfile}")
                 save_metadata(newfile, result)
         else:
-            newfile = "meta/" + results["filename"] + "-" + results["ss_session_id"]
+            newfile = f"meta/{results['filename']}-{results['ss_session_id']}"
             print(f"newfile: {newfile}")
             save_metadata(newfile, results)
     # print(results)
