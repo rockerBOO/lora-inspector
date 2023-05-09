@@ -90,6 +90,8 @@ schema: dict[str, str] = {
     "ss_session_id": "str",
     "ss_max_grad_norm": "float",
     "ss_noise_offset": "float",
+    "ss_multires_noise_discount": "float",
+    "ss_multires_noise_iterations": "float",
     "ss_min_snr_gamma": "float",
     "ss_sd_model_hash": "str",
     "ss_new_sd_model_hash": "str",
@@ -161,6 +163,25 @@ def parse_unet_blocks(vectors):
                 fed_para_text_encoder_weight_results[k] = vectors.get_tensor(k)
 
 
+def get_fed_para_weight(self):
+    d_weight = self.hada_w1_a @ self.hada_w1_b
+    d_weight *= self.hada_w2_a @ self.hada_w2_b
+    return (d_weight).reshape(self.shape)
+
+
+def reduce_fed_para(acc: dict[str, list[Tensor]], k, v):
+    parts = k.split(".")
+
+    if "hada" in parts[1]:
+        a = acc.setdefault(parts[0], {})
+        if a is None:
+            a = {}
+
+        a[parts[1]] = v
+
+    return acc
+
+
 # lora_unet_down_blocks_0_attentions_0_transformer_blocks_0_ff_net_0_proj.lora_up.weight
 # TODO: Reduce this function to only finding results to be displayed/exported elsewhere.
 def find_vectors_weights(vectors):
@@ -203,23 +224,6 @@ def find_vectors_weights(vectors):
                 isFedPara = True
                 fed_para_text_encoder_weight_results[k] = vectors.get_tensor(k)
 
-    def get_fed_para_weight(self):
-        d_weight = self.hada_w1_a @ self.hada_w1_b
-        d_weight *= self.hada_w2_a @ self.hada_w2_b
-        return (d_weight).reshape(self.shape)
-
-    def reduce_fed_para(acc: dict[str, list[Tensor]], k, v):
-        parts = k.split(".")
-
-        if "hada" in parts[1]:
-            a = acc.setdefault(parts[0], {})
-            if a is None:
-                a = {}
-
-            a[parts[1]] = v
-
-        return acc
-
     fed_para_results = {}
 
     if isFedPara:
@@ -252,7 +256,7 @@ def find_vectors_weights(vectors):
                 d_weights.setdefault(k, d_weight)
 
                 # print(layer, d_weight)
-                print(i)
+                # print(i)
                 i = i + 1
 
             i = 0
@@ -260,7 +264,7 @@ def find_vectors_weights(vectors):
                 s_mag = get_vector_data_magnitude(torch.flatten(d_weights[k]).tolist())
                 s_str = get_vector_data_strength(torch.flatten(d_weights[k]).tolist())
                 i = i + 1
-                print(f"{k:75} {i:3} {s_mag:20} {s_str:14} {len(d_weights[k])}")
+                # print(f"{k:75} {i:3} {s_mag:20} {s_str:14} {len(d_weights[k])}")
 
                 sum_mag += s_mag
                 sum_str += s_str
@@ -268,13 +272,13 @@ def find_vectors_weights(vectors):
             avg_mag = sum_mag / num_results
             avg_str = sum_str / num_results
 
-            print(f"UNet fed para (LoHA) weight average magnitude: {avg_mag}")
-            print(f"UNet fed para (LoHA) weight average strength: {avg_str}")
+            print(f"UNet fed para (LoHa) weight average magnitude: {avg_mag}")
+            print(f"UNet fed para (LoHa) weight average strength: {avg_str}")
 
         for k in fed_para_text_encoder_weight_results.keys():
             # parts = k.split(".")
 
-            print(k)
+            # print(k)
             reduce_fed_para(fed_para_results, k, fed_para_unet_attn_weight_results[k])
 
         num_results = len(fed_para_results)
@@ -300,7 +304,7 @@ def find_vectors_weights(vectors):
                 d_weights.setdefault(k, d_weight)
 
                 # print(layer, d_weight)
-                print(i)
+                # print(i)
                 i = i + 1
 
             i = 0
@@ -308,7 +312,7 @@ def find_vectors_weights(vectors):
                 s_mag = get_vector_data_magnitude(torch.flatten(d_weights[k]).tolist())
                 s_str = get_vector_data_strength(torch.flatten(d_weights[k]).tolist())
                 i = i + 1
-                print(f"{k:75} {i:3} {s_mag:20} {s_str:14}")
+                # print(f"{k:75} {i:3} {s_mag:20} {s_str:14}")
 
                 sum_mag += s_mag
                 sum_str += s_str
@@ -316,8 +320,12 @@ def find_vectors_weights(vectors):
             avg_mag = sum_mag / num_results
             avg_str = sum_str / num_results
 
-            print(f"UNet fed para (LoHA) text encoder weight average magnitude: {avg_mag}")
-            print(f"UNet fed para (LoHA) text encoder weight average strength: {avg_str}")
+            print(
+                f"UNet fed para (LoHa) text encoder weight average magnitude: {avg_mag}"
+            )
+            print(
+                f"UNet fed para (LoHa) text encoder weight average strength: {avg_str}"
+            )
 
     num_results = len(unet_attn_weight_results)
     if num_results > 0:
@@ -392,7 +400,7 @@ def get_vector_data_strength(data: dict[int, Tensor]) -> float:
     )  # the average value of each vector (ignoring negative values)
 
 
-def get_vector_data_magnitude(data: dict[int, Tensor]) -> float:
+def get_vector_data_magnitude(data: list[Tensor]) -> float:
     value = 0
     for n in data:
         value += pow(n, 2)
@@ -409,40 +417,41 @@ def save_metadata(file, metadata):
         print(f"creating directory {dir}")
         os.mkdir(dir)
 
-    with open(dir + os.path.basename(file) + ".json", "w+") as f:
+    with open(f"{dir}{os.path.basename(file)}.json", "w+") as f:
         json.dump(metadata, f, default=str)
 
 
 def process_safetensor_file(file, args):
-    with safe_open(file, framework="pt", device="cpu") as f:
+    with safe_open(file, framework="pt", device="cuda") as f:
         metadata = f.metadata()
+
+        filename = os.path.basename(file)
+        print(file)
 
         if args.weights:
             find_vectors_weights(f)
 
-    if metadata is not None:
-        filename = os.path.basename(file)
-        print(file)
-        parsed = parse_metadata(metadata)
-        parsed["file"] = file
-        parsed["filename"] = filename
-        print("----------------------")
-        return parsed
+        if metadata is not None:
+            parsed = parse_metadata(metadata)
+            parsed["file"] = file
+            parsed["filename"] = filename
+            print("----------------------")
+            return parsed
 
 
 def parse_metadata(metadata):
     if "sshs_model_hash" in metadata:
         items = parse(metadata)
 
-        # TODO if we are missing this value, they may not be saving the metadata 
-        # to the file or are missing key components. Should evaluate if we need 
+        # TODO if we are missing this value, they may not be saving the metadata
+        # to the file or are missing key components. Should evaluate if we need
         # to do more in the case that this is missing when we get more examples
         if "ss_network_dim" not in items:
             for key in items.keys():
                 print(items, items[key])
             return items
 
-        # print(json.dumps(items, indent=4, sort_keys = True, default=str))
+        # print(json.dumps(items, indent=4, sort_keys=True, default=str))
 
         print(
             f"train images: {items['ss_num_train_images']} regularization images: {items['ss_num_reg_images']}"
@@ -459,9 +468,22 @@ def parse_metadata(metadata):
         print(
             f"network dim/rank: {items['ss_network_dim']} alpha: {items['ss_network_alpha']} module: {items['ss_network_module']} {items.get('ss_network_args')}"
         )
-        print(
-            f"noise_offset: {items.get('ss_noise_offset', None)} min_snr_gamma: {items.get('ss_min_snr_gamma', None)} clip_skip: {items.get('ss_clip_skip', None)}"
-        )
+
+        def item(items, key, name):
+            if key in items and items.get(key) is not None:
+                return f"{name}: {items.get(key, '')}"
+
+            return ""
+
+        results = [
+            item(items, "ss_noise_offset", "noise offset"),
+            item(items, "ss_multires_noise_iterations", "multires noise iterations"),
+            item(items, "ss_multires_noise_discount", "multires noise discount"),
+            item(items, "ss_min_snr_gamma", "min snr gamma"),
+            item(items, "ss_clip_skip", "clip_skip"),
+        ]
+
+        print(" ".join(results).strip(" "))
 
         print(
             f"gradient norm: {items.get('ss_max_grad_norm')} checkpointing: {items.get('ss_gradient_checkpointing')}"
@@ -536,7 +558,7 @@ if __name__ == "__main__":
                 print(f"newfile: {newfile}")
                 save_metadata(newfile, result)
         else:
-            newfile = "meta/" + results["filename"] + "-" + results["ss_session_id"]
+            newfile = f"meta/{results['filename']}-{results['ss_session_id']}"
             print(f"newfile: {newfile}")
             save_metadata(newfile, results)
     # print(results)
