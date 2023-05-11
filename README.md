@@ -139,6 +139,25 @@ Text Encoder weight average magnitude: 3.128134997225176
 Text Encoder weight average strength: 0.00769676965767913
 ```
 
+### Definition
+
+- epoch: an epoch is seeing the entire dataset once
+- batches: how many batches per each epoch (does not include gradient accumulation steps)
+- train images: number of training images you have 
+- regularization images: number of regularization images
+- scheduler: the learning rate scheduler.
+- optimizer: the optimizer
+- network dim/rank: the rank of the LoRA network
+- alpha: the alpha to the rank of the LoRA network
+- module: which python module was used to to create the network (includes module arguments)
+- noise offset: noise offset option
+- adaptive noise scale: adapative noise scale
+- multires noise discount: multires noise discount
+- multires noise scale: multires noise scale
+
+- average magnitude: square each weight, add them up, get the square root
+- average strength: abs each weight, add them up, get average
+
 ## Changelog
 
 - 2023-04-12 — Add gradient norm, gradient checkpoint metadata

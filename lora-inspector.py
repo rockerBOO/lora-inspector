@@ -1,14 +1,14 @@
-from safetensors import safe_open
-import json
-import os
-from functools import reduce
-from pathlib import Path
 import argparse
-from datetime import datetime
-from typing import Callable
-from torch import Tensor
-import torch
+import json
 import math
+import os
+from datetime import datetime
+from pathlib import Path
+from typing import Callable
+
+import torch
+from safetensors import safe_open
+from torch import Tensor
 
 
 def to_datetime(str: str):
@@ -96,6 +96,7 @@ schema: dict[str, str] = {
     "ss_sd_model_hash": "str",
     "ss_new_sd_model_hash": "str",
     "ss_datasets": "json",
+    "ss_loss_func": "str",
 }
 
 
@@ -136,6 +137,8 @@ def find_vectors_weights(vectors):
     unet_attn_weight_results = {}
     unet_conv_weight_results = {}
     text_encoder_weight_results = {}
+
+    print(f"model key count: {len(vectors.keys())}")
 
     for k in vectors.keys():
         unet_down = "lora_unet_down_blocks_"
@@ -215,9 +218,9 @@ def get_vector_data_strength(data: dict[int, Tensor]) -> float:
     value = 0
     for n in data:
         value += abs(n)
-    return value / len(
-        data
-    )  # the average value of each vector (ignoring negative values)
+
+    # the average value of each vector (ignoring negative values)
+    return value / len(data)
 
 
 def get_vector_data_magnitude(data: dict[int, Tensor]) -> float:
@@ -248,15 +251,22 @@ def process_safetensor_file(file, args):
         filename = os.path.basename(file)
         print(file)
 
-        if args.weights:
-            find_vectors_weights(f)
+        parsed = {}
 
         if metadata is not None:
             parsed = parse_metadata(metadata)
             parsed["file"] = file
             parsed["filename"] = filename
-            print("----------------------")
-            return parsed
+
+        if args.weights:
+            find_vectors_weights(f)
+
+        print("----------------------")
+        return parsed
+
+
+def print_list(list):
+    print(" ".join(list).strip(" "))
 
 
 def parse_metadata(metadata):
@@ -273,42 +283,72 @@ def parse_metadata(metadata):
 
         # print(json.dumps(items, indent=4, sort_keys=True, default=str))
 
-        print(
-            f"train images: {items['ss_num_train_images']} regularization images: {items['ss_num_reg_images']}"
-        )
-        if (
-            items["ss_num_reg_images"] > 0
-            and items["ss_num_reg_images"] < items["ss_num_train_images"]
-        ):
-            print("Possibly not enough regularization images to training images.")
-
-        print(
-            f"learning rate: {items['ss_learning_rate']} unet: {items['ss_unet_lr']} text encoder: {items['ss_text_encoder_lr']} scheduler: {items['ss_lr_scheduler']}"
-        )
-
-        print(
-            f"epoch: {items['ss_epoch']} batches: {items['ss_num_batches_per_epoch']} optimizer: {items.get('ss_optimizer', '')}"
-        )
-
-        print(
-            f"network dim/rank: {items['ss_network_dim']} alpha: {items['ss_network_alpha']} module: {items['ss_network_module']} {items.get('ss_network_args')}"
-        )
-
         def item(items, key, name):
             if key in items and items.get(key) is not None:
                 return f"{name}: {items.get(key, '')}"
 
             return ""
 
+        print(
+            f"epoch: {items['ss_epoch']} batches: {items['ss_num_batches_per_epoch']}"
+        )
+
+        print(
+            f"train images: {items['ss_num_train_images']} regularization images: {items['ss_num_reg_images']}"
+        )
+
+        if (
+            items["ss_num_reg_images"] > 0
+            and items["ss_num_reg_images"] < items["ss_num_train_images"]
+        ):
+            print(
+                f"Possibly not enough regularization images ({items['ss_num_reg_images']}) to training images ({items['ss_num_train_images']})."
+            )
+
+        print(
+            f"learning rate: {items['ss_learning_rate']} unet: {items['ss_unet_lr']} text encoder: {items['ss_text_encoder_lr']}"
+        )
+
+        results = [
+            item(items, "ss_lr_scheduler", "scheduler"),
+            item(items, "ss_lr_scheduler_args", "scheduler args"),
+        ]
+
+        print_list(results)
+
+        results = [
+            item(items, "ss_optimizer", "optimizer"),
+            item(items, "ss_optimizer_args", "optimizer_args"),
+        ]
+
+        print_list(results)
+
+        if "loss_func" in items:
+            results = [
+                item(items, "ss_loss_func", "loss func"),
+            ]
+
+            print_list(results)
+
+        print(
+            f"network dim/rank: {items['ss_network_dim']} alpha: {items['ss_network_alpha']} module: {items['ss_network_module']} {items.get('ss_network_args')}"
+        )
+
         results = [
             item(items, "ss_noise_offset", "noise offset"),
+            item(items, "ss_adaptive_noise_scale", "adaptive noise scale"),
             item(items, "ss_multires_noise_iterations", "multires noise iterations"),
             item(items, "ss_multires_noise_discount", "multires noise discount"),
+        ]
+
+        print_list(results)
+
+        results = [
             item(items, "ss_min_snr_gamma", "min snr gamma"),
             item(items, "ss_clip_skip", "clip_skip"),
         ]
 
-        print(" ".join(results).strip(" "))
+        print_list(results)
 
         return items
     else:
@@ -323,7 +363,8 @@ def process(args):
     file = args.lora_file_or_dir
     if os.path.isdir(file):
         results = []
-        for path in find_safetensor_files(file):
+        files = sorted(find_safetensor_files(file))
+        for path in files:
             results.append(process_safetensor_file(path, args))
 
         return results
