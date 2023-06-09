@@ -354,6 +354,8 @@ def parse_metadata(metadata):
 
         print_list(results)
 
+
+
         return items
     else:
         print(
@@ -445,7 +447,6 @@ if __name__ == "__main__":
                         for kitem in freq[k].keys():
                             if int(freq[k][kitem]) > 3:
                                 tags.append({kitem: freq[k][kitem]})
-
                     print(sorted(tags))
         else:
             if "ss_tag_frequency" in results:
