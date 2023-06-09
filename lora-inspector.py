@@ -350,6 +350,8 @@ def parse_metadata(metadata):
 
         print_list(results)
 
+
+
         return items
     else:
         print(
@@ -390,7 +392,14 @@ if __name__ == "__main__":
         "-w",
         "--weights",
         action="store_true",
-        help="Find the average weights",
+        help="Show the average magnitude and strength of the weights",
+    )
+
+    parser.add_argument(
+        "-t",
+        "--tags",
+        action="store_true",
+        help="Show the most common tags in the training set",
     )
 
     args = parser.parse_args()
@@ -423,4 +432,29 @@ if __name__ == "__main__":
             newfile = f"meta/{results['filename']}-{results['ss_session_id']}"
             print(f"newfile: {newfile}")
             save_metadata(newfile, results)
+
+    if args.tags:
+        if type(results) == list:
+            for result in results:
+                if 'ss_tag_frequency' in result:
+                    freq =  result['ss_tag_frequency']
+                    tags = []
+                    for k in freq.keys():
+                        for kitem in freq[k].keys():
+                            if int(freq[k][kitem]) > 3:
+                                tags.append({kitem: freq[k][kitem]})
+                    
+
+                    print(sorted(tags))
+        else:
+            if 'ss_tag_frequency' in results:
+                freq =  results['ss_tag_frequency']
+                tags = []
+                for k in freq.keys():
+                    for kitem in freq[k].keys():
+                        if int(freq[k][kitem]) > 3:
+                            tags.append(freq[k][kitem])
+                
+
+                print(sorted(tags))
     # print(results)
