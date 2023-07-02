@@ -255,8 +255,11 @@ def process_safetensor_file(file, args):
 
         if metadata is not None:
             parsed = parse_metadata(metadata)
-            parsed["file"] = file
-            parsed["filename"] = filename
+        else:
+            parsed = {}
+
+        parsed["file"] = file
+        parsed["filename"] = filename
 
         if args.weights:
             find_vectors_weights(f)
@@ -403,14 +406,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     results = process(args)
 
-    # if type(results) == list:
-    #     for result in results:
-    #         if "filename" in result:
-    #             print(result["filename"])
-    # else:
-    #     if "filename" in result:
-    #         print(results["filename"])
-
     if args.save_meta:
         if type(results) == list:
             for result in results:
@@ -424,12 +419,20 @@ if __name__ == "__main__":
                     )
                 else:
                     newfile = "meta/" + str(result["filename"])
-                print(f"newfile: {newfile}")
                 save_metadata(newfile, result)
+                print(f"Metadata saved to {newfile}.json")
         else:
-            newfile = f"meta/{results['filename']}-{results['ss_session_id']}"
-            print(f"newfile: {newfile}")
+            if "ss_session_id" in results:
+                newfile = (
+                    "meta/"
+                    + str(results["filename"])
+                    + "-"
+                    + results["ss_session_id"]
+                )
+            else:
+                newfile = "meta/" + str(results["filename"])
             save_metadata(newfile, results)
+            print(f"Metadata saved to {newfile}.json")
 
     if args.tags:
         if type(results) == list:
