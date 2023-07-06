@@ -2,9 +2,10 @@ import argparse
 import json
 import math
 import os
+from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
-from typing import Callable
+from typing import Callable, OrderedDict
 
 import torch
 from safetensors import safe_open
@@ -354,6 +355,8 @@ def parse_metadata(metadata):
 
         print_list(results)
 
+
+
         return items
     else:
         print(
@@ -394,7 +397,14 @@ if __name__ == "__main__":
         "-w",
         "--weights",
         action="store_true",
-        help="Find the average weights",
+        help="Show the average magnitude and strength of the weights",
+    )
+
+    parser.add_argument(
+        "-t",
+        "--tags",
+        action="store_true",
+        help="Show the most common tags in the training set",
     )
 
     args = parser.parse_args()
@@ -427,4 +437,43 @@ if __name__ == "__main__":
                 newfile = "meta/" + str(results["filename"])
             save_metadata(newfile, results)
             print(f"Metadata saved to {newfile}.json")
+
+    if args.tags:
+        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
+        print("Tags")
+        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
+        if type(results) == list:
+            for result in results:
+                if "ss_tag_frequency" in result:
+                    freq = result["ss_tag_frequency"]
+                    tags = []
+                    for k in freq.keys():
+                        for kitem in freq[k].keys():
+                            if int(freq[k][kitem]) > 3:
+                                tags.append((kitem, freq[k][kitem]))
+
+                    print(sorted(tags))
+                else: 
+                    print("No tag frequency found")
+        else:
+            if "ss_tag_frequency" in results:
+                freq = results["ss_tag_frequency"]
+                tags = []
+                longest_tag = 0
+                for k in freq.keys():
+                    for kitem in freq[k].keys():
+                        if int(freq[k][kitem]) > 3:
+                            tags.append((kitem, freq[k][kitem]))
+
+                            if len(kitem) > longest_tag:
+                                longest_tag = len(kitem)
+
+                ordered = OrderedDict(reversed(sorted(tags, key=lambda t: t[1])))
+
+                justify_to = longest_tag + 1 if longest_tag < 60 else 60
+
+                for k, v in ordered.items():
+                    print(k.ljust(justify_to), v)
+            else: 
+                print("No tag frequency found")
     # print(results)
