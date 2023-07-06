@@ -1,18 +1,19 @@
 # LoRA inspector
 
 <!--toc:start-->
-
 - [LoRA inspector](#lora-inspector)
   - [Install](#install)
   - [Usage](#usage)
     - [Inspect](#inspect)
     - [Save meta](#save-meta)
     - [Average weights](#average-weights)
+    - [Tag Frequency](#tag-frequency)
+    - [Definition](#definition)
   - [Changelog](#changelog)
   - [Development](#development)
   - [Future](#future)
   - [Reference](#reference)
-  <!--toc:end-->
+<!--toc:end-->
 
 ![lora-inspector](https://user-images.githubusercontent.com/15027/230981999-1af9ec4e-4c05-40bc-a10a-b825c73b1013.png)
 
