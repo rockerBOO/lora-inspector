@@ -2,9 +2,10 @@ import argparse
 import json
 import math
 import os
+from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
-from typing import Callable
+from typing import Callable, OrderedDict
 
 import torch
 from safetensors import safe_open
@@ -438,6 +439,9 @@ if __name__ == "__main__":
             print(f"Metadata saved to {newfile}.json")
 
     if args.tags:
+        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
+        print("Tags")
+        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
         if type(results) == list:
             for result in results:
                 if "ss_tag_frequency" in result:
@@ -446,16 +450,30 @@ if __name__ == "__main__":
                     for k in freq.keys():
                         for kitem in freq[k].keys():
                             if int(freq[k][kitem]) > 3:
-                                tags.append({kitem: freq[k][kitem]})
+                                tags.append((kitem, freq[k][kitem]))
+
                     print(sorted(tags))
+                else: 
+                    print("No tag frequency found")
         else:
             if "ss_tag_frequency" in results:
                 freq = results["ss_tag_frequency"]
                 tags = []
+                longest_tag = 0
                 for k in freq.keys():
                     for kitem in freq[k].keys():
                         if int(freq[k][kitem]) > 3:
-                            tags.append(freq[k][kitem])
+                            tags.append((kitem, freq[k][kitem]))
 
-                print(sorted(tags))
+                            if len(kitem) > longest_tag:
+                                longest_tag = len(kitem)
+
+                ordered = OrderedDict(reversed(sorted(tags, key=lambda t: t[1])))
+
+                justify_to = longest_tag + 1 if longest_tag < 60 else 60
+
+                for k, v in ordered.items():
+                    print(k.ljust(justify_to), v)
+            else: 
+                print("No tag frequency found")
     # print(results)
