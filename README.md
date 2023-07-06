@@ -139,17 +139,76 @@ Text Encoder weight average magnitude: 3.128134997225176
 Text Encoder weight average strength: 0.00769676965767913
 ```
 
+### Tag Frequency
+
+Shows the frequency of a tag (words separated by commas). Trigger words are
+generally the most frequent, as they would use that word across the whole
+training dataset.
+
+```
+$ python lora-inspector.py -t /mnt/900/lora/booscapes.safetensors
+...
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Tags
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+4k photo”                         23
+spectacular mountains             17
+award winning nature photo        16
+ryan dyar                         14
+image credit nasa nat geo         11
+sunset in a valley                11
+garden                            10
+british columbia                  10
+dramatic autumn landscape         10
+autumn mountains                  10
+an amazing landscape image        10
+austria                           9
+nature scenery                    9
+pristine water                    9
+boreal forest                     9
+scenic view of river              9
+alpes                             9
+mythical floral hills             8
+misty environment                 8
+a photo of a lake on a sunny day  8
+majestic beautiful world          8
+breathtaking stars                8
+lush valley                       7
+dramatic scenery                  7
+solar storm                       7
+siberia                           7
+cosmic skies                      7
+dolomites                         7
+oregon                            6
+landscape photography 4k          6
+very long spires                  6
+beautiful forests and trees       6
+wildscapes                        6
+mountain behind meadow            6
+colorful wildflowers              6
+photo of green river              6
+beautiful night sky               6
+switzerland                       6
+natural dynamic range color       6
+middle earth                      6
+jessica rossier color scheme      6
+arizona                           6
+enchanting and otherworldly       6
+```
+
 ### Definition
 
 - epoch: an epoch is seeing the entire dataset once
-- batches: how many batches per each epoch (does not include gradient accumulation steps)
-- train images: number of training images you have 
+- batches: how many batches per each epoch (does not include gradient
+  accumulation steps)
+- train images: number of training images you have
 - regularization images: number of regularization images
 - scheduler: the learning rate scheduler.
 - optimizer: the optimizer
 - network dim/rank: the rank of the LoRA network
 - alpha: the alpha to the rank of the LoRA network
-- module: which python module was used to to create the network (includes module arguments)
+- module: which python module was used to to create the network (includes module
+  arguments)
 - noise offset: noise offset option
 - adaptive noise scale: adapative noise scale
 - multires noise discount: multires noise discount
@@ -160,6 +219,7 @@ Text Encoder weight average strength: 0.00769676965767913
 
 ## Changelog
 
+- 2023-07-06 — Add Tag Frequency
 - 2023-04-12 — Add gradient norm, gradient checkpoint metadata
 - 2023-04-03 — Add clip_skip, segment off LoCon/conv layers in average weights
 - 2023-04-03 — Add noise_offset, min_snr_gamma (when added to kohya-ss), and
