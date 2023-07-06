@@ -546,8 +546,8 @@ if __name__ == "__main__":
         print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
         print("Tags")
         print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
-        if type(results) == list:
-            for result in results:
+        if type(meta) == list:
+            for result in meta:
                 if "ss_tag_frequency" in result:
                     freq = result["ss_tag_frequency"]
                     tags = []
@@ -560,8 +560,8 @@ if __name__ == "__main__":
                 else: 
                     print("No tag frequency found")
         else:
-            if "ss_tag_frequency" in results:
-                freq = results["ss_tag_frequency"]
+            if "ss_tag_frequency" in meta:
+                freq = meta["ss_tag_frequency"]
                 tags = []
                 longest_tag = 0
                 for k in freq.keys():
