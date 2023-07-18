@@ -5,7 +5,7 @@ import os
 from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, OrderedDict
+from typing import Any, Callable, Union
 
 import torch
 from safetensors import safe_open
@@ -14,6 +14,13 @@ from torch import Tensor
 
 def to_datetime(str: str):
     return datetime.fromtimestamp(float(str))
+
+
+class NameSpace(argparse.ArgumentParser):
+    lora_file_or_dir: str
+    save_meta: bool
+    weights: bool
+    tags: bool
 
 
 parsers: dict[str, Callable] = {
@@ -98,12 +105,17 @@ schema: dict[str, str] = {
     "ss_new_sd_model_hash": "str",
     "ss_datasets": "json",
     "ss_loss_func": "str",
+    "ss_network_dropout": "float",
+    "ss_scale_weight_norms": "float",
+    "ss_adaptive_noise_scale": "float",
+    "ss_steps": "int",
 }
 
 
 def parse_item(key: str, value: str) -> int | float | bool | datetime | str | None:
     if key not in schema:
         print(f"invalid key in schema {key}")
+        print(value)
         return value
 
     if schema[key] == "int" and value == "None":
@@ -236,17 +248,17 @@ def find_safetensor_files(path: str | Path):
     return Path(path).rglob("*.safetensors")
 
 
-def save_metadata(file, metadata):
-    dir = "meta/"
-    if os.path.isdir(dir) is False:
-        print(f"creating directory {dir}")
+def save_metadata(file: Path, metadata):
+    dir = Path("meta/")
+    if dir.is_dir() is False:
+        print(f"creating directory {dir.resolve()}")
         os.mkdir(dir)
 
-    with open(f"{dir}{os.path.basename(file)}.json", "w+") as f:
+    with open(Path(dir / file.stem / ".json"), "w+") as f:
         json.dump(metadata, f, default=str)
 
 
-def process_safetensor_file(file, args):
+def process_safetensor_file(file: Path, args) -> dict[str, Any]:
     with safe_open(file, framework="pt", device="cpu") as f:
         metadata = f.metadata()
 
@@ -289,7 +301,7 @@ def parse_metadata(metadata):
         # print(json.dumps(items, indent=4, sort_keys=True, default=str))
 
         def item(items, key, name):
-            if key in items and items.get(key) is not None:
+            if key in items and items.get(key) is not None and items.get(key) != "None":
                 return f"{name}: {items.get(key, '')}"
 
             return ""
@@ -299,16 +311,16 @@ def parse_metadata(metadata):
         )
 
         print(
-            f"train images: {items['ss_num_train_images']} regularization images: {items['ss_num_reg_images']}"
+            f"train images: {items['ss_num_train_images']} {item(items, 'ss_num_reg_images', 'regularization images')}"
         )
 
-        if (
-            items["ss_num_reg_images"] > 0
-            and items["ss_num_reg_images"] < items["ss_num_train_images"]
-        ):
-            print(
-                f"Possibly not enough regularization images ({items['ss_num_reg_images']}) to training images ({items['ss_num_train_images']})."
-            )
+        # if (
+        #     items["ss_num_reg_images"] > 0
+        #     and items["ss_num_reg_images"] < items["ss_num_train_images"]
+        # ):
+        #     print(
+        #         f"Possibly not enough regularization images ({items['ss_num_reg_images']}) to training images ({items['ss_num_train_images']})."
+        #     )
 
         print(
             f"learning rate: {items['ss_learning_rate']} unet: {items['ss_unet_lr']} text encoder: {items['ss_text_encoder_lr']}"
@@ -336,7 +348,7 @@ def parse_metadata(metadata):
             print_list(results)
 
         print(
-            f"network dim/rank: {items['ss_network_dim']} alpha: {items['ss_network_alpha']} module: {items['ss_network_module']} {items.get('ss_network_args')}"
+            f"network dim/rank: {items['ss_network_dim']} network alpha: {items['ss_network_alpha']} network module: {items['ss_network_module']} {items.get('ss_network_args')}"
         )
 
         results = [
@@ -355,8 +367,6 @@ def parse_metadata(metadata):
 
         print_list(results)
 
-
-
         return items
     else:
         print(
@@ -366,9 +376,72 @@ def parse_metadata(metadata):
         return {}
 
 
-def process(args):
-    file = args.lora_file_or_dir
-    if os.path.isdir(file):
+def tags(results: Union[list[dict[str, Any]], dict[str, Any]]):
+    print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
+    print("Tags")
+    print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
+    if type(results) == list:
+        for result in results:
+            if "ss_tag_frequency" in result:
+                freq = result["ss_tag_frequency"]
+                tags = []
+                for k in freq.keys():
+                    for kitem in freq[k].keys():
+                        if int(freq[k][kitem]) > 3:
+                            tags.append((kitem, freq[k][kitem]))
+
+                print(sorted(tags))
+            else:
+                print("No tag frequency found")
+    elif type(results) == dict:
+        if "ss_tag_frequency" in results:
+            freq = results["ss_tag_frequency"]
+            tags = []
+            longest_tag = 0
+            for k in freq.keys():
+                for kitem in freq[k].keys():
+                    if int(freq[k][kitem]) > 3:
+                        tags.append((kitem, freq[k][kitem]))
+
+                        if len(kitem) > longest_tag:
+                            longest_tag = len(kitem)
+
+            ordered = OrderedDict(reversed(sorted(tags, key=lambda t: t[1])))
+
+            justify_to = longest_tag + 1 if longest_tag < 60 else 60
+
+            for k, v in ordered.items():
+                print(k.ljust(justify_to), v)
+        else:
+            print("No tag frequency found")
+
+
+def save_meta(results: Union[list[dict[str, Any]], dict[str, Any]]):
+    if type(results) == list:
+        for result in results:
+            # print("result", json.dumps(result, indent=4, sort_keys=True, default=str))
+            if "ss_session_id" in result:
+                newfile = Path(
+                    "meta" / f"{str(result['filename'])}-{result['ss_session_id']}"
+                )
+            else:
+                newfile = Path("meta" / str(result["filename"]))
+            save_metadata(newfile, result)
+            print(f"Metadata saved to {newfile}.json")
+    else:
+        if "ss_session_id" in results:
+            newfile = Path(
+                "meta" / str(results["filename"]) + "-" + results["ss_session_id"]
+            )
+        else:
+            newfile = Path("meta/" + str(results["filename"]))
+        save_metadata(newfile, results)
+        print(f"Metadata saved to {newfile}.json")
+
+
+def process(args: type[NameSpace]):
+    file = Path(args.lora_file_or_dir)
+    if file.is_dir():
         results = []
         files = sorted(find_safetensor_files(file))
         for path in files:
@@ -407,73 +480,11 @@ if __name__ == "__main__":
         help="Show the most common tags in the training set",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(namespace=NameSpace)
     results = process(args)
 
     if args.save_meta:
-        if type(results) == list:
-            for result in results:
-                # print("result", json.dumps(result, indent=4, sort_keys=True, default=str))
-                if "ss_session_id" in result:
-                    newfile = (
-                        "meta/"
-                        + str(result["filename"])
-                        + "-"
-                        + result["ss_session_id"]
-                    )
-                else:
-                    newfile = "meta/" + str(result["filename"])
-                save_metadata(newfile, result)
-                print(f"Metadata saved to {newfile}.json")
-        else:
-            if "ss_session_id" in results:
-                newfile = (
-                    "meta/"
-                    + str(results["filename"])
-                    + "-"
-                    + results["ss_session_id"]
-                )
-            else:
-                newfile = "meta/" + str(results["filename"])
-            save_metadata(newfile, results)
-            print(f"Metadata saved to {newfile}.json")
+        save_meta(results)
 
     if args.tags:
-        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
-        print("Tags")
-        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
-        if type(results) == list:
-            for result in results:
-                if "ss_tag_frequency" in result:
-                    freq = result["ss_tag_frequency"]
-                    tags = []
-                    for k in freq.keys():
-                        for kitem in freq[k].keys():
-                            if int(freq[k][kitem]) > 3:
-                                tags.append((kitem, freq[k][kitem]))
-
-                    print(sorted(tags))
-                else: 
-                    print("No tag frequency found")
-        else:
-            if "ss_tag_frequency" in results:
-                freq = results["ss_tag_frequency"]
-                tags = []
-                longest_tag = 0
-                for k in freq.keys():
-                    for kitem in freq[k].keys():
-                        if int(freq[k][kitem]) > 3:
-                            tags.append((kitem, freq[k][kitem]))
-
-                            if len(kitem) > longest_tag:
-                                longest_tag = len(kitem)
-
-                ordered = OrderedDict(reversed(sorted(tags, key=lambda t: t[1])))
-
-                justify_to = longest_tag + 1 if longest_tag < 60 else 60
-
-                for k, v in ordered.items():
-                    print(k.ljust(justify_to), v)
-            else: 
-                print("No tag frequency found")
-    # print(results)
+        tags(results)
