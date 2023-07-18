@@ -1,6 +1,7 @@
 # LoRA inspector
 
 <!--toc:start-->
+
 - [LoRA inspector](#lora-inspector)
   - [Install](#install)
   - [Usage](#usage)
@@ -13,7 +14,7 @@
   - [Development](#development)
   - [Future](#future)
   - [Reference](#reference)
-<!--toc:end-->
+  <!--toc:end-->
 
 ![lora-inspector](https://user-images.githubusercontent.com/15027/230981999-1af9ec4e-4c05-40bc-a10a-b825c73b1013.png)
 
@@ -220,6 +221,8 @@ enchanting and otherworldly       6
 
 ## Changelog
 
+- 2023-07-17 — Add network dropout, scale weight norms, adaptive noise scale,
+  and steps
 - 2023-07-06 — Add Tag Frequency
 - 2023-04-12 — Add gradient norm, gradient checkpoint metadata
 - 2023-04-03 — Add clip_skip, segment off LoCon/conv layers in average weights
