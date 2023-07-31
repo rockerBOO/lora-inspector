@@ -221,6 +221,7 @@ enchanting and otherworldly       6
 
 ## Changelog
 
+- 2023-07-31 — Add SDXL support
 - 2023-07-17 — Add network dropout, scale weight norms, adaptive noise scale,
   and steps
 - 2023-07-06 — Add Tag Frequency
