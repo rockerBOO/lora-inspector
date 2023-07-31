@@ -109,6 +109,8 @@ schema: dict[str, str] = {
     "ss_scale_weight_norms": "float",
     "ss_adaptive_noise_scale": "float",
     "ss_steps": "int",
+    "ss_base_model_version": "str",
+    "ss_zero_terminal_snr": "bool",
 }
 
 
@@ -144,23 +146,41 @@ def key_match(key, match):
     return match in key
 
 
+def avg_weights(results, name=""):
+    num_results = len(results)
+
+    avg_mag = 0
+    avg_str = 0
+
+    if num_results > 0:
+        sum_mag = 0  # average magnitude
+        sum_str = 0  # average strength
+        for k in results.keys():
+            sum_mag += get_vector_data_magnitude(results[k])
+            sum_str += get_vector_data_strength(results[k])
+
+        avg_mag = sum_mag / num_results
+        avg_str = sum_str / num_results
+
+        print(f"{name} weight average magnitude: {avg_mag}")
+        print(f"{name} weight average strength: {avg_str}")
+
+    return avg_mag, avg_str
+
+
 def find_vectors_weights(vectors):
     weight = ".weight"
 
     unet_attn_weight_results = {}
     unet_conv_weight_results = {}
-    text_encoder_weight_results = {}
+    text_encoder1_weight_results = {}
+    text_encoder2_weight_results = {}
 
     print(f"model key count: {len(vectors.keys())}")
 
     for k in vectors.keys():
-        unet_down = "lora_unet_down_blocks_"
-        unet_up = "lora_unet_up_blocks_"
-        if (
-            key_start_match(k, unet_down)
-            or key_start_match(k, unet_up)
-            # or key_match(k, text_encoder)
-        ):
+        unet = "lora_unet"
+        if key_start_match(k, unet) or key_start_match(k, unet):
             if k.endswith(weight):
                 if key_match(k, "conv"):
                     unet_conv_weight_results[k] = torch.flatten(
@@ -171,60 +191,49 @@ def find_vectors_weights(vectors):
                         vectors.get_tensor(k)
                     ).tolist()
 
+        # SD 1.x 2.x text encoder
         text_encoder = "lora_te_text_model_encoder_layers_"
         if key_start_match(k, text_encoder):
             if k.endswith(weight):
-                text_encoder_weight_results[k] = torch.flatten(
+                text_encoder1_weight_results[k] = torch.flatten(
                     vectors.get_tensor(k)
                 ).tolist()
 
-    num_results = len(unet_attn_weight_results)
-    if num_results > 0:
-        sum_mag = 0  # average magnitude
-        sum_str = 0  # average strength
-        for k in unet_attn_weight_results.keys():
-            sum_mag += get_vector_data_magnitude(unet_attn_weight_results[k])
-            sum_str += get_vector_data_strength(unet_attn_weight_results[k])
+        # SDXL text encoder 1
+        text_encoder = "lora_te1_text_model_encoder_layers"
+        if key_start_match(k, text_encoder):
+            if k.endswith(weight):
+                text_encoder1_weight_results[k] = torch.flatten(
+                    vectors.get_tensor(k)
+                ).tolist()
 
-        avg_mag = sum_mag / num_results
-        avg_str = sum_str / num_results
+        # SDXL text encoder 2
+        text_encoder = "lora_te2_text_model_encoder_layers_"
+        if key_start_match(k, text_encoder):
+            if k.endswith(weight):
+                text_encoder2_weight_results[k] = torch.flatten(
+                    vectors.get_tensor(k)
+                ).tolist()
 
-        print(f"UNet attention weight average magnitude: {avg_mag}")
-        print(f"UNet attention weight average strength: {avg_str}")
+    avg_weights(unet_attn_weight_results, name="UNet")
+    avg_weights(unet_conv_weight_results, name="UNet Conv")
+    avg_weights(text_encoder1_weight_results, name="Text Encoder (1)")
+    avg_weights(text_encoder2_weight_results, name="Text Encoder (2)")
 
-    num_results = len(unet_conv_weight_results)
+    if len(unet_attn_weight_results) == 0 and len(unet_conv_weight_results) == 0:
+        print("No UNet found in this LoRA")
 
-    if num_results > 0:
-        sum_mag = 0  # average magnitude
-        sum_str = 0  # average strength
-        for k in unet_conv_weight_results.keys():
-            sum_mag += get_vector_data_magnitude(unet_conv_weight_results[k])
-            sum_str += get_vector_data_strength(unet_conv_weight_results[k])
-
-        avg_mag = sum_mag / num_results
-        avg_str = sum_str / num_results
-
-        print(f"UNet conv weight average magnitude: {avg_mag}")
-        print(f"UNet conv weight average strength: {avg_str}")
-
-    num_results = len(text_encoder_weight_results)
-
-    if num_results > 0:
-        sum_mag = 0  # average magnitude
-        sum_str = 0  # average strength
-        for k in text_encoder_weight_results.keys():
-            sum_mag += get_vector_data_magnitude(text_encoder_weight_results[k])
-            sum_str += get_vector_data_strength(text_encoder_weight_results[k])
-
-        avg_mag = sum_mag / num_results
-        avg_str = sum_str / num_results
-
-        print(f"Text Encoder weight average magnitude: {avg_mag}")
-        print(f"Text Encoder weight average strength: {avg_str}")
+    if (
+        len(text_encoder1_weight_results) == 0
+        and len(text_encoder2_weight_results) == 0
+    ):
+        print("No Text Encoder found in this LoRA")
 
     return {
         "unet": unet_attn_weight_results,
-        "text_encoder": text_encoder_weight_results,
+        "unet_conv": unet_conv_weight_results,
+        "text_encoder1": text_encoder1_weight_results,
+        "text_encoder2": text_encoder2_weight_results,
     }
 
 
@@ -277,6 +286,9 @@ def process_safetensor_file(file: Path, args) -> dict[str, Any]:
 
         if args.weights:
             find_vectors_weights(f)
+
+        if args.tags:
+            tags(parsed)
 
         print("----------------------")
         return parsed
@@ -362,7 +374,8 @@ def parse_metadata(metadata):
 
         results = [
             item(items, "ss_min_snr_gamma", "min snr gamma"),
-            item(items, "ss_clip_skip", "clip_skip"),
+            item(items, "ss_zero_terminal_snr", "zero terminal snr"),
+            item(items, "ss_clip_skip", "clip skip"),
         ]
 
         print_list(results)
@@ -376,44 +389,45 @@ def parse_metadata(metadata):
         return {}
 
 
-def tags(results: Union[list[dict[str, Any]], dict[str, Any]]):
-    print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
+def print_tags(freq):
+    """
+    freq: Tag frequency
+    """
+
+    print("----------------------")
     print("Tags")
-    print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
+    print("----------------------")
+
+    tags = []
+    longest_tag = 0
+    for k in freq.keys():
+        for kitem in freq[k].keys():
+            if int(freq[k][kitem]) > 3:
+                tags.append((kitem, freq[k][kitem]))
+
+                if len(kitem) > longest_tag:
+                    longest_tag = len(kitem)
+
+    ordered = OrderedDict(reversed(sorted(tags, key=lambda t: t[1])))
+
+    justify_to = longest_tag + 1 if longest_tag < 60 else 60
+
+    for k, v in ordered.items():
+        print(k.ljust(justify_to), v)
+
+
+def tags(results: Union[list[dict[str, Any]], dict[str, Any]]):
     if type(results) == list:
         for result in results:
             if "ss_tag_frequency" in result:
-                freq = result["ss_tag_frequency"]
-                tags = []
-                for k in freq.keys():
-                    for kitem in freq[k].keys():
-                        if int(freq[k][kitem]) > 3:
-                            tags.append((kitem, freq[k][kitem]))
-
-                print(sorted(tags))
+                print_tags(result["ss_tag_frequency"])
             else:
-                print("No tag frequency found")
+                print("No tags found")
     elif type(results) == dict:
         if "ss_tag_frequency" in results:
-            freq = results["ss_tag_frequency"]
-            tags = []
-            longest_tag = 0
-            for k in freq.keys():
-                for kitem in freq[k].keys():
-                    if int(freq[k][kitem]) > 3:
-                        tags.append((kitem, freq[k][kitem]))
-
-                        if len(kitem) > longest_tag:
-                            longest_tag = len(kitem)
-
-            ordered = OrderedDict(reversed(sorted(tags, key=lambda t: t[1])))
-
-            justify_to = longest_tag + 1 if longest_tag < 60 else 60
-
-            for k, v in ordered.items():
-                print(k.ljust(justify_to), v)
+            print_tags(results["ss_tag_frequency"])
         else:
-            print("No tag frequency found")
+            print("No tags found")
 
 
 def save_meta(results: Union[list[dict[str, Any]], dict[str, Any]]):
@@ -485,6 +499,3 @@ if __name__ == "__main__":
 
     if args.save_meta:
         save_meta(results)
-
-    if args.tags:
-        tags(results)
