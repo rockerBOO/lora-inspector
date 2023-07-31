@@ -55,8 +55,8 @@ Can install them one of the following:
 ### Inspect
 
 ```bash
-$ python lora-inspector.py -h
-usage: lora-inspector.py [-h] [-s] [-w] lora_file_or_dir
+$ python lora-inspector.py --help
+usage: lora-inspector.py [-h] [-s] [-w] [-t] lora_file_or_dir
 
 positional arguments:
   lora_file_or_dir  Directory containing the lora files
@@ -64,7 +64,8 @@ positional arguments:
 options:
   -h, --help        show this help message and exit
   -s, --save_meta   Should we save the metadata to a file?
-  -w, --weights     Find the average weights
+  -w, --weights     Show the average magnitude and strength of the weights
+  -t, --tags        Show the most common tags in the training set
 ```
 
 You can add a directory or file:
