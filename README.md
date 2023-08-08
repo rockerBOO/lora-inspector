@@ -1,6 +1,7 @@
 # LoRA inspector
 
 <!--toc:start-->
+
 - [LoRA inspector](#lora-inspector)
   - [Install](#install)
   - [Usage](#usage)
@@ -15,7 +16,7 @@
   - [Development](#development)
   - [Future](#future)
   - [Reference](#reference)
-<!--toc:end-->
+  <!--toc:end-->
 
 ![lora-inspector](https://user-images.githubusercontent.com/15027/230981999-1af9ec4e-4c05-40bc-a10a-b825c73b1013.png)
 
@@ -225,6 +226,9 @@ enchanting and otherworldly       6
 
 Simple script to update your metadata values. Helpful for changing
 `ss_output_name` for applications that use this value to set a good name for it.
+
+To see your current metadata values, save the metadata using
+`lora-inspector.py --save_meta ...` and inspect the JSON file.
 
 ```
 $ python update_metadata.py --help
