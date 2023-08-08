@@ -1,20 +1,21 @@
 # LoRA inspector
 
 <!--toc:start-->
-
 - [LoRA inspector](#lora-inspector)
   - [Install](#install)
   - [Usage](#usage)
     - [Inspect](#inspect)
     - [Save meta](#save-meta)
     - [Average weights](#average-weights)
-    - [Tag Frequency](#tag-frequency)
+    - [Tag frequency](#tag-frequency)
     - [Definition](#definition)
+  - [Update metadata](#update-metadata)
+    - [Usage](#usage)
   - [Changelog](#changelog)
   - [Development](#development)
   - [Future](#future)
   - [Reference](#reference)
-  <!--toc:end-->
+<!--toc:end-->
 
 ![lora-inspector](https://user-images.githubusercontent.com/15027/230981999-1af9ec4e-4c05-40bc-a10a-b825c73b1013.png)
 
@@ -142,7 +143,7 @@ Text Encoder weight average magnitude: 3.128134997225176
 Text Encoder weight average strength: 0.00769676965767913
 ```
 
-### Tag Frequency
+### Tag frequency
 
 Shows the frequency of a tag (words separated by commas). Trigger words are
 generally the most frequent, as they would use that word across the whole
@@ -220,8 +221,35 @@ enchanting and otherworldly       6
 - average magnitude: square each weight, add them up, get the square root
 - average strength: abs each weight, add them up, get average
 
+## Update metadata
+
+Simple script to update your metadata values. Helpful for changing
+`ss_output_name` for applications that use this value to set a good name for it.
+
+```
+$ python update_metadata.py --help
+usage: update_metadata.py [-h] [--key KEY] [--value VALUE] safetensors_file
+
+positional arguments:
+  safetensors_file
+
+options:
+  -h, --help        show this help message and exit
+  --key KEY         Key to change in the metadata
+  --value VALUE     Value to set to the metadata
+```
+
+### Usage
+
+```
+$ python update_metadata.py /mnt/900/lora/testing/armored-core-2023-08-02-173642-ddb4785e.safetensors --key ss_output_name --value mechBOO_v2
+Updated ss_output_name with mechBOO_v2
+Saved to /mnt/900/lora/testing/armored-core-2023-08-02-173642-ddb4785e.safetensors
+```
+
 ## Changelog
 
+- 2023-08-08 — Add simple metadata updater script
 - 2023-07-31 — Add SDXL support
 - 2023-07-17 — Add network dropout, scale weight norms, adaptive noise scale,
   and steps
