@@ -47,7 +47,7 @@ schema: dict[str, str] = {
     "ss_full_fp16": "bool",
     "ss_vae_hash": "str",
     "ss_gradient_checkpoint": "bool",
-    "ss_output_name": "bool",
+    "ss_output_name": "str",
     "ss_bucket_info": "json",
     "sshs_model_hash": "str",
     "sshs_legacy_hash": "str",
@@ -263,8 +263,10 @@ def save_metadata(file: Path, metadata):
         print(f"creating directory {dir.resolve()}")
         os.mkdir(dir)
 
-    with open(Path(dir / file.stem / ".json"), "w+") as f:
+    output_file = str(dir) + "/" + file.stem + ".json"
+    with open(Path(output_file), "w+") as f:
         json.dump(metadata, f, default=str)
+        print(f"Saved metadata to {output_file}")
 
 
 def process_safetensor_file(file: Path, args) -> dict[str, Any]:
@@ -436,21 +438,19 @@ def save_meta(results: Union[list[dict[str, Any]], dict[str, Any]]):
             # print("result", json.dumps(result, indent=4, sort_keys=True, default=str))
             if "ss_session_id" in result:
                 newfile = Path(
-                    "meta" / f"{str(result['filename'])}-{result['ss_session_id']}"
+                    "meta/" + f"{str(result['filename'])}-{result['ss_session_id']}"
                 )
             else:
-                newfile = Path("meta" / str(result["filename"]))
+                newfile = Path("meta/" + str(result["filename"]))
             save_metadata(newfile, result)
-            print(f"Metadata saved to {newfile}.json")
     else:
         if "ss_session_id" in results:
-            newfile = Path(
-                "meta" / str(results["filename"]) + "-" + results["ss_session_id"]
-            )
+            session_metadata_file = f"{results['filename']}+{results['ss_session_id']}"
+            newfile = Path("meta")
+            newfile = newfile / session_metadata_file
         else:
             newfile = Path("meta/" + str(results["filename"]))
         save_metadata(newfile, results)
-        print(f"Metadata saved to {newfile}.json")
 
 
 def process(args: type[NameSpace]):
