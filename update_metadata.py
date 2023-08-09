@@ -22,9 +22,9 @@ def main(args):
         for key in f.keys():
             tensors[key] = f.get_tensor(key)
 
-        save_file(tensors, args.safetensors_file, metadata)
+    save_file(tensors, args.safetensors_file, metadata)
 
-        print(f"Saved to {args.safetensors_file}")
+    print(f"Saved to {args.safetensors_file}")
 
 
 if __name__ == "__main__":
