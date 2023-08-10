@@ -111,6 +111,13 @@ schema: dict[str, str] = {
     "ss_steps": "int",
     "ss_base_model_version": "str",
     "ss_zero_terminal_snr": "bool",
+    "modelspec.implementation": "str",
+    "modelspec.resolution": "str",
+    "modelspec.sai_model_spec": "str",
+    "modelspec.date": "str",
+    "modelspec.title": "str",
+    "modelspec.prediction_type": "str",
+    "modelspec.architecture": "str",
 }
 
 
@@ -327,6 +334,23 @@ def parse_metadata(metadata):
         print(
             f"train images: {items['ss_num_train_images']} {item(items, 'ss_num_reg_images', 'regularization images')}"
         )
+
+        if items["modelspec.title"] != "":
+            # item(items, "modelspec.implementation", "implementation"),
+            # item(items, "modelspec.resolution", "resolution"),
+            # item(items, "modelspec.sai_model_spec", "sai"),
+            # item(items, "modelspec.prediction_type", "prediction type"),
+            results = [
+                item(items, "modelspec.date", "date"),
+                item(items, "modelspec.title", "title"),
+            ]
+
+            print_list(results)
+
+            results = [
+                item(items, "modelspec.architecture", "architecture"),
+            ]
+            print_list(results)
 
         # if (
         #     items["ss_num_reg_images"] > 0
