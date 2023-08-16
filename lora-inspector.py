@@ -335,7 +335,7 @@ def parse_metadata(metadata):
             f"train images: {items['ss_num_train_images']} {item(items, 'ss_num_reg_images', 'regularization images')}"
         )
 
-        if items["modelspec.title"] != "":
+        if items.get("modelspec.title", "") != "":
             # item(items, "modelspec.implementation", "implementation"),
             # item(items, "modelspec.resolution", "resolution"),
             # item(items, "modelspec.sai_model_spec", "sai"),
