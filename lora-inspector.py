@@ -184,6 +184,8 @@ def find_vectors_weights(vectors):
     text_encoder2_weight_results = {}
 
     print(f"model key count: {len(vectors.keys())}")
+    #
+    # print(vectors.keys())
 
     for k in vectors.keys():
         unet = "lora_unet"
@@ -335,7 +337,7 @@ def parse_metadata(metadata):
             f"train images: {items['ss_num_train_images']} {item(items, 'ss_num_reg_images', 'regularization images')}"
         )
 
-        if items["modelspec.title"] != "":
+        if "modelspec.title" in items and items.get("modelspec.title", "") != "":
             # item(items, "modelspec.implementation", "implementation"),
             # item(items, "modelspec.resolution", "resolution"),
             # item(items, "modelspec.sai_model_spec", "sai"),
