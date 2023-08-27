@@ -7,13 +7,13 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-numpy1 = "^0.0.1"
 safetensors = "^0.3.3"
 wandb = "^0.15.8"
 pillow = "^10.0.0"
+numpy = "^1.25.2"
 
 [tool.poetry.group.dev.dependencies]
-131228_pytest_1 = "^1.0.0"
+pytest = "^7.4.0"
 
 [build-system]
 requires = ["poetry-core"]
