@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "lora-inspector"
+version = "0.1.0"
+description = ""
+authors = ["rockerBOO <rockerboo@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy1 = "^0.0.1"
+safetensors = "^0.3.3"
+wandb = "^0.15.8"
+pillow = "^10.0.0"
+
+[tool.poetry.group.dev.dependencies]
+131228_pytest_1 = "^1.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

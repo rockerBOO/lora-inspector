@@ -9,6 +9,7 @@
     - [Save meta](#save-meta)
     - [Average weights](#average-weights)
     - [Tag frequency](#tag-frequency)
+    - [Dataset](#dataset)
     - [Definition](#definition)
   - [Update metadata](#update-metadata)
     - [Usage](#usage)
@@ -201,22 +202,35 @@ arizona                           6
 enchanting and otherworldly       6
 ```
 
+### Dataset
+
+A pretty basic view of the dataset with the directories and number of images.
+
+```
+$ python lora-inspector.py -d /mnt/900/lora/booscapes.safetensors
+Dataset dirs: 2
+    [source] 50 images
+    [p7] 4 images
+```
+
 ### Definition
 
 - epoch: an epoch is seeing the entire dataset once
-- batches: how many batches per each epoch (does not include gradient
+- Batches per epoch: how many batches per each epoch (does not include gradient
   accumulation steps)
-- train images: number of training images you have
-- regularization images: number of regularization images
-- scheduler: the learning rate scheduler.
-- optimizer: the optimizer
-- network dim/rank: the rank of the LoRA network
-- alpha: the alpha to the rank of the LoRA network
-- module: which python module was used to to create the network (includes module
-  arguments)
-- noise offset: noise offset option
-- adaptive noise scale: adapative noise scale
-- multires noise discount: multires noise discount
+- Gradient accumulation steps: gradient accumulation steps
+- Train images: number of training images you have
+- Regularization images: number of regularization images
+- Scheduler: the learning rate scheduler (cosine, cosine_with_restart, linear,
+  constant, …)
+- Optimizer: the optimizer (Adam, Prodigy, DAdaptation, Lion, …)
+- Network dim/rank: the rank of the LoRA network
+- Alpha: the alpha to the rank of the LoRA network
+- Module: the python module that created the network
+- Noise offset: noise offset option
+- Adaptive noise scale: adaptive noise scale
+- multires noise discount: multires noise discount (See
+  [Multi-Resolution Noise for Diffusion Model Training](https://wandb.ai/johnowhitaker/multires_noise/reports/Multi-Resolution-Noise-for-Diffusion-Model-Training--VmlldzozNjYyOTU2))
 - multires noise scale: multires noise scale
 
 - average magnitude: square each weight, add them up, get the square root
@@ -253,6 +267,8 @@ Saved to /mnt/900/lora/testing/armored-core-2023-08-02-173642-ddb4785e.safetenso
 
 ## Changelog
 
+- 2023-08-27 — Add max_grad_norm, scale weight norms, gradient accumulation
+  steps, dropout, and datasets
 - 2023-08-08 — Add simple metadata updater script
 - 2023-07-31 — Add SDXL support
 - 2023-07-17 — Add network dropout, scale weight norms, adaptive noise scale,
