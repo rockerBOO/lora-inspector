@@ -365,11 +365,16 @@ def parse_metadata(metadata, args):
             get_item(items, "ss_network_dim", "Network Dim/Rank"),
             get_item(items, "ss_network_alpha", "Alpha"),
             get_item(items, "ss_network_dropout", "Dropout"),
-            get_item(items, "ss_network_module", "Module"),
         ]
 
         print_list(results)
 
+        results = [
+            get_item(items, "ss_network_module", "Module"),
+            get_item(items, "ss_network_args", ""),
+        ]
+
+        print_list(results)
 
         results = [
             get_item(items, "ss_learning_rate", "Learning Rate (LR)"),
