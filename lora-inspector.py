@@ -427,6 +427,7 @@ def parse_metadata(metadata, args):
         results = [
             get_item(items, "ss_noise_offset", "Noise offset"),
             get_item(items, "ss_adaptive_noise_scale", "Adaptive noise scale"),
+            get_item(items, "ss_ip_noise_gamma", "IP noise gamma"),
             get_item(
                 items, "ss_multires_noise_iterations", "Multires noise iterations"
             ),

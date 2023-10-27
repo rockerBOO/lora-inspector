@@ -229,6 +229,13 @@ Dataset dirs: 2
 - Module: the python module that created the network
 - Noise offset: noise offset option
 - Adaptive noise scale: adaptive noise scale
+- IP noise gamma: Input Perturbation noise gamma
+  [Input Perturbation Reduces Exposure Bias in Diffusion Models](https://arxiv.org/abs/2301.11706)
+
+  - > …we propose a very simple but effective training regularization,
+    > consisting in perturbing the ground truth samples to simulate the
+    > inference time prediction errors.
+
 - multires noise discount: multires noise discount (See
   [Multi-Resolution Noise for Diffusion Model Training](https://wandb.ai/johnowhitaker/multires_noise/reports/Multi-Resolution-Noise-for-Diffusion-Model-Training--VmlldzozNjYyOTU2))
 - multires noise scale: multires noise scale
