@@ -112,6 +112,7 @@ schema: dict[str, str] = {
     "ss_steps": "int",
     "ss_base_model_version": "str",
     "ss_zero_terminal_snr": "bool",
+    "ss_ip_noise_gamma": "float",
     "modelspec.implementation": "str",
     "modelspec.resolution": "str",
     "modelspec.sai_model_spec": "str",
@@ -398,7 +399,7 @@ def parse_metadata(metadata, args):
         ]
 
         print_list(results)
-        
+
         results = [
             get_item(items, "ss_epoch", "Epoch"),
             get_item(items, "ss_num_batches_per_epoch", "Batches per epoch"),
