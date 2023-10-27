@@ -274,6 +274,7 @@ Saved to /mnt/900/lora/testing/armored-core-2023-08-02-173642-ddb4785e.safetenso
 
 ## Changelog
 
+- 2023-10-27 — Add IP noise gamma
 - 2023-08-27 — Add max_grad_norm, scale weight norms, gradient accumulation
   steps, dropout, and datasets
 - 2023-08-08 — Add simple metadata updater script
