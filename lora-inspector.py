@@ -305,7 +305,7 @@ def process_safetensor_file(file: Path, args) -> dict[str, Any]:
         if metadata is not None:
             for key in f.keys():
                 if "weight" in key:
-                    metadata["dtype"] = f.get_tensor(key).dtype
+                    metadata["dtype"] = f.get_slice(key).get_dtype()
                     break
 
             parsed = parse_metadata(metadata, args)
