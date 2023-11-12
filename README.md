@@ -49,9 +49,12 @@ tqdm
 
 Can install them one of the following:
 
-- `pip install torch safetensors tqdm`,
-- make/use with a venv/conda
-- add this script to your training directory (to access the dependencies).
+- Add this script to your training directory and use the virtual environment
+  (`venv`). **RECOMMENDED**
+- Make/use with a venv/conda
+- `pip install safetensors tqdm` (See
+  [Get started](https://pytorch.org/get-started/locally/) for instructions on
+  how to install PyTorch)
 
 ## Usage
 
@@ -269,7 +272,8 @@ Dataset dirs: 2
 
 - average magnitude: square each weight, add them up, get the square root
 - average strength: abs each weight, add them up, get average
-- debiased estimation loss: [Debias the Training of Diffusion Models](https://arxiv.org/abs/2310.08442)
+- debiased estimation loss:
+  [Debias the Training of Diffusion Models](https://arxiv.org/abs/2310.08442)
 
 ## Update metadata
 
