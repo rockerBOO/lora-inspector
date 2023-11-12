@@ -59,7 +59,7 @@ Can install them one of the following:
 
 ```bash
 $ python lora-inspector.py --help
-usage: lora-inspector.py [-h] [-s] [-w] [-t] lora_file_or_dir
+usage: lora-inspector.py [-h] [-s] [-w] [-t] [-d] lora_file_or_dir
 
 positional arguments:
   lora_file_or_dir  Directory containing the lora files
@@ -69,43 +69,70 @@ options:
   -s, --save_meta   Should we save the metadata to a file?
   -w, --weights     Show the average magnitude and strength of the weights
   -t, --tags        Show the most common tags in the training set
+  -d, --dataset     Show the dataset metadata including directory names and number of images
 ```
 
 You can add a directory or file:
 
 ```bash
-$ python lora-inspector.py /mnt/900/training/sets/cyberpunk-anime-24-2023-04-03-13:23:36-e94c9dd8 -w
-UNet weight average magnitude: 1.974654662580427
-UNet weight average strength: 0.015630576804489364
-Text Encoder weight average magnitude: 0.9055601234903398
-Text Encoder weight average strength: 0.009029422735480932
-/mnt/900/training/sets/cyberpunk-anime-24-2023-04-03-13:23:36-e94c9dd8/last.safetensors
-train images: 201 regularization images: 1600
-learning rate: 0.01 unet: 0.001 text encoder: 0.0001 scheduler: cosine
-epoch: 2 batches: 402 optimizer: torch.optim.adamw.AdamW
-network dim/rank: 8.0 alpha: 4.0 module: networks.lora {'conv_dim': '32', 'conv_alpha': '0.3'}
-noise_offset: 0.1 min_snr_gamma: 1.0
+$ python lora-inspector.py /mnt/900/training/sets/landscape-2023-11-06-200718-e4d7120b -w
+/mnt/900/training/sets/landscape-2023-11-06-200718-e4d7120b/landscape-2023-11-06-200718-e4d7120b-000015.safetensors
+Date: 2023-11-06T20:16:34 Title: landscape
+License: CreativeML Open RAIL-M Author: rockerBOO
+Description: High quality landscape photos
+Resolution: 512x512 Architecture: stable-diffusion-v1/lora
+Network Dim/Rank: 16.0 Alpha: 8.0 Dropout: 0.3 dtype: torch.float32
+Module: networks.lora : {'block_dims': '4,4,4,4,4,4,4,4,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8', 'block_alphas': '16,16,16,16,16,16,16,16,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32', 'block_dropout': '0.01, 0.010620912260804992, 0.01248099020159499, 0.015572268683063176, 0.01988151037617019, 0.02539026244641935, 0.032074935571726845, 0.03990690495552037, 0.04885263290251277, 0.058873812432261884, 0.0699275313155418, 0.08196645583109653, 0.09493903345590124, 0.10878971362098, 0.12345918558747097, 0.13888463242431537, 0.155, 0.17173627983648962, 0.18902180461412393, 0.20678255506208312, 0.22494247692026895, 0.2434238066153228, 0.26214740425618505, 0.2810330925232585', 'dropout': 0.3}
+Learning Rate (LR): 2e-06 UNet LR: 1.0 TE LR: 1.0
+Optimizer: prodigyopt.prodigy.Prodigy(weight_decay=0.1,betas=(0.9, 0.9999),d_coef=1.5,use_bias_correction=True)
+Scheduler: cosine  Warmup steps: 0
+Epoch: 15 Batches per epoch: 57 Gradient accumulation steps: 24
+Train images: 57 Regularization images: 0
+Noise offset: 0.05 Adaptive noise scale: 0.01 IP noise gamma: 0.1  Multires noise discount: 0.3
+Min SNR gamma: 5.0 Zero terminal SNR: True Debiased Estimation: True
+UNet weight average magnitude: 0.7865518983141094
+UNet weight average strength: 0.00995593195090544
+No Text Encoder found in this LoRA
 ----------------------
-UNet weight average magnitude: 1.9316962578548313
-UNet weight average strength: 0.015348419610733969
-Text Encoder weight average magnitude: 0.9034643649275405
-Text Encoder weight average strength: 0.009012302642521
-/mnt/900/training/sets/cyberpunk-anime-24-2023-04-03-13:23:36-e94c9dd8/epoch-000001.safetensors
-train images: 201 regularization images: 1600
-learning rate: 0.01 unet: 0.001 text encoder: 0.0001 scheduler: cosine
-epoch: 1 batches: 402 optimizer: torch.optim.adamw.AdamW
-network dim/rank: 8.0 alpha: 4.0 module: networks.lora {'conv_dim': '32', 'conv_alpha': '0.3'}
-noise_offset: 0.1 min_snr_gamma: 1.0
+/mnt/900/training/sets/landscape-2023-11-06-200718-e4d7120b/landscape-2023-11-06-200718-e4d7120b.safetensors
+Date: 2023-11-06T20:27:12 Title: landscape
+License: CreativeML Open RAIL-M Author: rockerBOO
+Description: High quality landscape photos
+Resolution: 512x512 Architecture: stable-diffusion-v1/lora
+Network Dim/Rank: 16.0 Alpha: 8.0 Dropout: 0.3 dtype: torch.float32
+Module: networks.lora : {'block_dims': '4,4,4,4,4,4,4,4,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8', 'block_alphas': '16,16,16,16,16,16,16,16,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32', 'block_dropout': '0.01, 0.010620912260804992, 0.01248099020159499, 0.015572268683063176, 0.01988151037617019, 0.02539026244641935, 0.032074935571726845, 0.03990690495552037, 0.04885263290251277, 0.058873812432261884, 0.0699275313155418, 0.08196645583109653, 0.09493903345590124, 0.10878971362098, 0.12345918558747097, 0.13888463242431537, 0.155, 0.17173627983648962, 0.18902180461412393, 0.20678255506208312, 0.22494247692026895, 0.2434238066153228, 0.26214740425618505, 0.2810330925232585', 'dropout': 0.3}
+Learning Rate (LR): 2e-06 UNet LR: 1.0 TE LR: 1.0
+Optimizer: prodigyopt.prodigy.Prodigy(weight_decay=0.1,betas=(0.9, 0.9999),d_coef=1.5,use_bias_correction=True)
+Scheduler: cosine  Warmup steps: 0
+Epoch: 30 Batches per epoch: 57 Gradient accumulation steps: 24
+Train images: 57 Regularization images: 0
+Noise offset: 0.05 Adaptive noise scale: 0.01 IP noise gamma: 0.1  Multires noise discount: 0.3
+Min SNR gamma: 5.0 Zero terminal SNR: True Debiased Estimation: True
+UNet weight average magnitude: 0.8033398082829257
+UNet weight average strength: 0.010114916750103732
+No Text Encoder found in this LoRA
+----------------------
 ```
 
 ```bash
-$ python lora-inspector.py /mnt/900/training/cyberpunk-anime-21-min-snr/unet-1.15-te-1.15-noise-0.1-steps--linear-DAdaptation-networks.lora/last.safetensors
-/mnt/900/training/cyberpunk-anime-21-min-snr/unet-1.15-te-1.15-noise-0.1-steps--linear-DAdaptation-networks.lora/last.safetensors
-train images: 1005 regularization images: 32000
-learning rate: 1.15 unet: 1.15 text encoder: 1.15
-epoch: 1 batches: 2025
-optimizer: dadaptation.dadapt_adam.DAdaptAdam lr scheduler: linear
-network dim/rank: 8.0 alpha: 4.0 module: networks.lora
+$ python lora-inspector.py /mnt/900/lora/testing/landscape-2023-11-06-200718-e4d7120b.safetensors
+/mnt/900/lora/testing/landscape-2023-11-06-200718-e4d7120b.safetensors
+Date: 2023-11-06T20:27:12 Title: landscape
+License: CreativeML Open RAIL-M Author: rockerBOO
+Description: High quality landscape photos
+Resolution: 512x512 Architecture: stable-diffusion-v1/lora
+Network Dim/Rank: 16.0 Alpha: 8.0 Dropout: 0.3 dtype: torch.float32
+Module: networks.lora : {'block_dims': '4,4,4,4,4,4,4,4,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8', 'block_alphas': '16,16,16,16,16,16,16,16,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32', 'block_dropout': '0.01, 0.010620912260804992, 0.01248099020159499, 0.015572268683063176, 0.01988151037617019, 0.02539026244641935, 0.032074935571726845, 0.03990690495552037, 0.04885263290251277, 0.058873812432261884, 0.0699275313155418, 0.08196645583109653, 0.09493903345590124, 0.10878971362098, 0.12345918558747097, 0.13888463242431537, 0.155, 0.17173627983648962, 0.18902180461412393, 0.20678255506208312, 0.22494247692026895, 0.2434238066153228, 0.26214740425618505, 0.2810330925232585', 'dropout': 0.3}
+Learning Rate (LR): 2e-06 UNet LR: 1.0 TE LR: 1.0
+Optimizer: prodigyopt.prodigy.Prodigy(weight_decay=0.1,betas=(0.9, 0.9999),d_coef=1.5,use_bias_correction=True)
+Scheduler: cosine  Warmup steps: 0
+Epoch: 30 Batches per epoch: 57 Gradient accumulation steps: 24
+Train images: 57 Regularization images: 0
+Noise offset: 0.05 Adaptive noise scale: 0.01 IP noise gamma: 0.1  Multires noise discount: 0.3
+Min SNR gamma: 5.0 Zero terminal SNR: True Debiased Estimation: True
+UNet weight average magnitude: 0.8033398082829257
+UNet weight average strength: 0.010114916750103732
+No Text Encoder found in this LoRA
 ----------------------
 ```
 

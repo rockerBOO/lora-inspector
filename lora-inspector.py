@@ -121,6 +121,10 @@ schema: dict[str, str] = {
     "modelspec.sai_model_spec": "str",
     "modelspec.date": "str",
     "modelspec.title": "str",
+    "modelspec.author": "str",
+    "modelspec.license": "str",
+    "modelspec.description": "str",
+    "modelspec.tags": "str",
     "modelspec.prediction_type": "str",
     "modelspec.architecture": "str",
 }
@@ -341,6 +345,23 @@ def process_modelspec(metadata, args):
         ]
 
         print_list(results)
+
+        results = [
+            get_item(metadata, "modelspec.license", "License"),
+            get_item(metadata, "modelspec.author", "Author"),
+        ]
+
+        print_list(results)
+
+        results = [
+            get_item(metadata, "modelspec.description", "Description"),
+        ]
+
+        print_list(results)
+
+        results = [
+            get_item(metadata, "modelspec.tags", "Tags"),
+        ]
 
         results = [
             get_item(metadata, "modelspec.resolution", "Resolution"),
