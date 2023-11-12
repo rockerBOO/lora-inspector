@@ -242,6 +242,7 @@ Dataset dirs: 2
 
 - average magnitude: square each weight, add them up, get the square root
 - average strength: abs each weight, add them up, get average
+- debiased estimation loss: [Debias the Training of Diffusion Models](https://arxiv.org/abs/2310.08442)
 
 ## Update metadata
 
@@ -274,6 +275,7 @@ Saved to /mnt/900/lora/testing/armored-core-2023-08-02-173642-ddb4785e.safetenso
 
 ## Changelog
 
+- 2023-11-11 — Add debiased estimation loss, dtype (precision)
 - 2023-10-27 — Add IP noise gamma
 - 2023-08-27 — Add max_grad_norm, scale weight norms, gradient accumulation
   steps, dropout, and datasets

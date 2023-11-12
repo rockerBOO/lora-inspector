@@ -113,6 +113,9 @@ schema: dict[str, str] = {
     "ss_base_model_version": "str",
     "ss_zero_terminal_snr": "bool",
     "ss_ip_noise_gamma": "float",
+    "ss_debiased_estimation": "bool",
+    "ss_masked_loss": "bool",
+    "dtype": "str",
     "modelspec.implementation": "str",
     "modelspec.resolution": "str",
     "modelspec.sai_model_spec": "str",
@@ -135,7 +138,12 @@ def parse_item(key: str, value: str) -> int | float | bool | datetime | str | No
     if schema[key] == "float" and value == "None":
         return None
 
-    # print(key)
+    if key == "ss_network_dim" and value == "Dynamic":
+        return "Dynamic"
+
+    if key == "ss_network_alpha" and value == "Dynamic":
+        return "Dynamic"
+
     return parsers[schema[key]](value)
 
 
@@ -198,6 +206,7 @@ def find_vectors_weights(vectors):
                         vectors.get_tensor(k)
                     ).tolist()
                 else:
+                    test = vectors.get_tensor(k)
                     unet_attn_weight_results[k] = torch.flatten(
                         vectors.get_tensor(k)
                     ).tolist()
@@ -290,6 +299,11 @@ def process_safetensor_file(file: Path, args) -> dict[str, Any]:
         parsed = {}
 
         if metadata is not None:
+            for key in f.keys():
+                if "weight" in key:
+                    metadata["dtype"] = f.get_tensor(key).dtype
+                    break
+
             parsed = parse_metadata(metadata, args)
         else:
             parsed = {}
@@ -336,7 +350,10 @@ def process_modelspec(metadata, args):
 
 
 def print_list(list):
-    print(" ".join(list).strip(" "))
+    printable = " ".join(list).strip()
+
+    if len(printable) > 0:
+        print(printable.strip(" "))
 
 
 def get_item(items, key, name):
@@ -366,6 +383,7 @@ def parse_metadata(metadata, args):
             get_item(items, "ss_network_dim", "Network Dim/Rank"),
             get_item(items, "ss_network_alpha", "Alpha"),
             get_item(items, "ss_network_dropout", "Dropout"),
+            f"dtype: {items['dtype']}",
         ]
 
         print_list(results)
@@ -439,12 +457,16 @@ def parse_metadata(metadata, args):
         results = [
             get_item(items, "ss_min_snr_gamma", "Min SNR gamma"),
             get_item(items, "ss_zero_terminal_snr", "Zero terminal SNR"),
+            get_item(items, "ss_debiased_estimation", "Debiased Estimation"),
+        ]
+
+        print_list(results)
+
+        results = [
             get_item(items, "ss_max_grad_norm", "Max grad norm"),
             get_item(items, "ss_scale_weight_norms", "Scale weight norms"),
             get_item(items, "ss_clip_skip", "Clip skip"),
         ]
-
-        print_list(results)
 
         if args.dataset is True:
             process_datasets(items, args)
