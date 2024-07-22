@@ -21,8 +21,8 @@
 
 ![lora-inspector](https://user-images.githubusercontent.com/15027/230981999-1af9ec4e-4c05-40bc-a10a-b825c73b1013.png)
 
-Inspect LoRA files for meta info (and hopefully quantitative analysis of the
-LoRA weights).
+Inspect LoRA files for meta info and  quantitative analysis of the
+LoRA weights.
 
 - view training parameters
 - extract metadata to be stored (we can store it in JSON currently)
@@ -32,6 +32,8 @@ LoRA weights).
 ---
 
 _NOTE_ this is a work in progress and not meant for production use. _NOTE_
+
+Consider using the new web interface [LoRA Inspector](https://lora-inspector.rocker.boo) for a GUI representation.
 
 ---
 
