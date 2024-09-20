@@ -9,7 +9,7 @@ readme = "README.md"
 python = "^3.10"
 safetensors = "^0.3.3"
 wandb = "^0.15.8"
-pillow = "^10.0.0"
+pillow = "^10.3.0"
 numpy = "^1.25.2"
 
 [tool.poetry.group.dev.dependencies]
