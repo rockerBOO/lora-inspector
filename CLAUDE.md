@@ -27,22 +27,6 @@ LoRA Inspector is a tool for analyzing LoRA (Low-Rank Adaptation) machine learni
 - Analyzing training parameters
 - Providing insights into model training characteristics
 
-### Key Functionalities
-- Inspect LoRA file metadata
-- Save metadata to JSON
-- Analyze weight magnitudes
-- Explore tag frequencies
-- Update metadata for LoRA files
-
-### Primary Scripts
-- `lora-inspector.py`: Main inspection tool
-- `update_metadata.py`: Metadata modification utility
-
-### Supported File Types
-- Primary support for `.safetensors` files
-- Primarily works with Kohya-ss LoRA metadata
-- Focuses on Stable Diffusion model training metadata
-
 ## Development Notes
 
 ### Dependency Management
@@ -63,12 +47,6 @@ For single-file scripts, use the following PEP 723 format:
 # ///
 ```
 
-#### Project Dependencies
-- Uses `uv` for script and dependency management
-- Requires Python 3.11+
-- Key dependencies: safetensors, pillow, numpy, torch
-- Recommended to use `uv run python filename.py` for running scripts
-
 ### Script Development Best Practices
 
 #### Argument Parsing
@@ -76,9 +54,3 @@ For single-file scripts, use the following PEP 723 format:
 - Define clear, descriptive help text for each argument
 - Use appropriate argument types and actions
 - Support both required and optional arguments
-
-### Future Development
-Potential areas for expansion:
-- Metadata database integration
-- Enhanced LoRA file comparison
-- Comprehensive training issue detection
