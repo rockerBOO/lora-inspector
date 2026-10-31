@@ -1,3 +1,11 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "torch>=2.0",
+#     "safetensors>=0.3.3",
+# ]
+# ///
 import argparse
 import json
 import math
