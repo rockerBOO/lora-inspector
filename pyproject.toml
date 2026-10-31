@@ -1,20 +1,31 @@
-[tool.poetry]
+[project]
 name = "lora-inspector"
 version = "0.1.0"
-description = ""
-authors = ["rockerBOO <rockerboo@gmail.com>"]
+description = "Inspect and analyze LoRA safetensors files"
 readme = "README.md"
+authors = [{ name = "rockerBOO", email = "rockerboo@gmail.com" }]
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.25.2",
+    "pillow>=13.0.0",
+    "safetensors>=0.3.3",
+    "torch>=2.0",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-safetensors = "^0.3.3"
-wandb = "^0.15.8"
-pillow = "^12.1.1"
-numpy = "^1.25.2"
+[project.optional-dependencies]
+# Extra analysis/plotting scripts (visualize.py, similarity.py, etc.)
+analysis = [
+    "matplotlib",
+    "pandas",
+    "scikit-learn",
+    "seaborn",
+    "tqdm",
+]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^9.0.3"
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+# No build-system: the scripts are standalone, so uv treats this as a
+# virtual project (dependencies only, nothing installed).
