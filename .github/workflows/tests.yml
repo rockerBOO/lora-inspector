@@ -1,0 +1,29 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      # The default Linux torch wheel pulls in multi-GB CUDA packages. Tests
+      # only need CPU, so install the CPU build instead of `uv sync`.
+      - name: Install dependencies
+        run: |
+          uv venv --python ${{ matrix.python-version }}
+          uv pip install torch --index-url https://download.pytorch.org/whl/cpu
+          uv pip install safetensors numpy pillow pytest
+
+      - name: Run tests
+        run: uv run --no-sync pytest
