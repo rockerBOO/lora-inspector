@@ -29,3 +29,6 @@ dev = [
 
 # No build-system: the scripts are standalone, so uv treats this as a
 # virtual project (dependencies only, nothing installed).
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
