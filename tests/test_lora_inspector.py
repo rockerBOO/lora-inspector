@@ -69,6 +69,9 @@ class TestHelpers:
         assert inspector.get_vector_data_magnitude([3.0, 4.0]) == 5.0
         assert inspector.get_vector_data_strength([-1.0, 3.0]) == 2.0
 
+    def test_vector_strength_empty(self, inspector):
+        assert inspector.get_vector_data_strength([]) == 0.0
+
     def test_find_safetensor_files_recurses(self, inspector, tmp_path):
         (tmp_path / "sub").mkdir()
         (tmp_path / "a.safetensors").touch()
@@ -122,6 +125,9 @@ class TestProcessFile:
         assert "UNet Conv weight average strength: 1.0" in out
         assert "Text Encoder (1) weight average magnitude: 2.0" in out
         assert "No Text Encoder found" not in out
+
+    def test_avg_weights_empty_tensor(self, inspector):
+        assert inspector.avg_weights({"k": []}, name="UNet") == (0.0, 0.0)
 
     def test_find_vectors_weights_groups_keys(self, inspector, lora_file):
         with safe_open(lora_file, framework="pt", device="cpu") as f:

@@ -275,7 +275,7 @@ def get_vector_data_strength(data: dict[int, Tensor]) -> float:
         value += abs(n)
 
     # the average value of each vector (ignoring negative values)
-    return value / len(data)
+    return value / len(data) if data else 0.0
 
 
 def get_vector_data_magnitude(data: dict[int, Tensor]) -> float:
